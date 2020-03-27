@@ -1,6 +1,7 @@
 from torch import nn
 import torch
 from torchvision.models import alexnet
+from utils import center_crop
 
 
 class AlexNetComparator(nn.Module):
@@ -41,6 +42,8 @@ class TransposeConvGenerator(nn.Module):
         super(Generator, self).__init__()
         # https://github.com/shijx12/DeepSim/blob/master/deepSimGAN/deepSimNet.py
         negative_slope = 0.3
+        self.deconv_output_size = 256
+        self.desired_output_size = 227
         self.fully_connected = nn.Sequential(
             nn.Linear(input_size, 4096),
             nn.LeakyReLU(negative_slope=negative_slope),
@@ -111,13 +114,15 @@ class TransposeConvGenerator(nn.Module):
                 out_channels=3,
                 kernel_size=4,
                 stride=2,
-                padding=17),  # 224x224x3
+                padding=1),  # 256x256x3
         )
 
     def forward(self, x):
-        x = self.fully_connected(x)
-        x = x.reshape((-1, 4, 4, 256))
-        x = self.deconv(x)
+        x = self.fully_connected(x)  # 4096
+        x = x.reshape((-1, 4, 4, 256))  # 4x4x256
+        x = self.deconv(x)  # 256x256x3
+        x = center_crop(x, self.deconv_output_size,
+                        self.desired_output_size)  # 227x227x3
         return x
 
 
@@ -127,6 +132,8 @@ class UpsampleConvGenerator(nn.Module):
         super(Generator, self).__init__()
         negative_slope = 0.3
         padding_mode = 'same'
+        self.deconv_output_size = 256
+        self.desired_output_size = 227
         self.fully_connected = nn.Sequential(
             nn.Linear(input_size, 4096),
             nn.LeakyReLU(negative_slope=negative_slope),
@@ -197,19 +204,21 @@ class UpsampleConvGenerator(nn.Module):
                 stride=1,
                 padding_mode=padding_mode),  # 128x128x32
             nn.LeakyReLU(negative_slope=negative_slope),
-            nn.UpsamplingNearest2d(scale_factor=1.75),  # 224x224x32
+            nn.UpsamplingNearest2d(scale_factor=2),  # 256x256x32
             nn.Conv2d(
                 in_channels=32,
                 out_channels=3,
                 kernel_size=3,
                 stride=1,
-                padding_mode=padding_mode),  # 224x224x3
+                padding_mode=padding_mode),  # 256x256x3
         )
 
     def forward(self, x):
-        x = self.fully_connected(x)
-        x = x.reshape((-1, 4, 4, 256))
-        x = self.deconv(x)
+        x = self.fully_connected(x)  # 4096
+        x = x.reshape((-1, 4, 4, 256))  # 4x4x256
+        x = self.deconv(x)  # 256x256x3
+        x = center_crop(x, self.deconv_output_size,
+                        self.desired_output_size)  # 227x227x3
         return x
 
 
@@ -217,53 +226,53 @@ class Discriminator(nn.Module):
 
     def __init__(self):
         super(Generator, self).__init__()
-        padding_mode = 'valid'
         negative_slope = 0.3
-        self.conv = nn.Sequential(
-            nn.Conv(
+        self.conv = nn.Sequential(  # input: 227x227x3
+            nn.Conv2d(
                 in_channels=3,
                 out_channels=32,
                 kernel_size=7,
                 stride=4,
-                padding_mode=padding_mode),
-            nn.Conv(
+                padding=0),  # 56x56x32
+            nn.Conv2d(
                 in_channels=32,
                 out_channels=64,
                 kernel_size=5,
                 stride=1,
-                padding_mode=padding_mode),
-            nn.Conv(
+                padding=0),  # 52x52x64
+            nn.ZeroPad2d((1, 0, 1, 0)),  # 53x53x64
+            nn.Conv2d(
                 in_channels=64,
                 out_channels=128,
                 kernel_size=3,
                 stride=2,
-                padding_mode=padding_mode),
-            nn.Conv(
+                padding=0),  # 26x26x128
+            nn.Conv2d(
                 in_channels=128,
                 out_channels=256,
                 kernel_size=3,
                 stride=1,
-                padding_mode=padding_mode),
-            nn.Conv(
+                padding=0),  # 24x24x256
+            nn.ZeroPad2d((1, 0, 1, 0)),  # 25x25x256
+            nn.Conv2d(
                 in_channels=256,
                 out_channels=256,
                 kernel_size=3,
                 stride=2,
-                padding_mode=padding_mode),
-            nn.AvgPool2d(kernel_size=11, stride=11))
-        self.features_fc = nn.Sequential(
-            nn.Linear(69,
-                      1024),  # TODO: not sure what the input dimension is...
+                padding=0),  # 12x12x256
+            nn.AvgPool2d(kernel_size=12, stride=12))  # 1x1x256
+        self.features_fc = nn.Sequential(  # input: 4096
+            nn.Linear(4096, 1024),
             nn.LeakyReLU(negative_slope=negative_slope),
             nn.Linear(1024, 512),
             nn.LeakyReLU(negative_slope=negative_slope),
         )
         self.fc = nn.Sequential(
             nn.Dropout(0.5),
-            nn.Linear(69, 512),  # TODO: not sure what the input dimension is...
+            nn.Linear(4096 + 256, 512),
             nn.LeakyReLU(negative_slope=negative_slope),
             nn.Dropout(0.5),
-            nn.Linear(69, 1),  # TODO: not sure what the input dimension is...
+            nn.Linear(512, 2),
         )
 
     def forward(self, image, features):

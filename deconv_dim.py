@@ -3,7 +3,7 @@
 Hin = 128
 kernel_size = 4
 stride = 2
-padding = 17
+padding = 0
 dilation = 1
 output_padding = 0
 
