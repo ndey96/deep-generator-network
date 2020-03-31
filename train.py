@@ -21,44 +21,126 @@ def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
         shutil.copyfile(filename, 'model_best.pth.tar')
 
 
+
 def generator_loss(a, a_hat, x, x_hat, comparator, discriminator):
     deep_feature_loss = torch.sum((comparator(x) - comparator(x_hat)) ** 2)
     reconstruction_loss = torch.sum((x - x_hat) ** 2)
-    discriminator_loss = discriminator(69) # TODO
+    discriminator_loss = discriminator(69) # TODO: Dis should take the input data (x) and features_real (a).
     loss = discriminator_loss + 0.1 * deep_feature_loss + 0.001 * reconstruction_loss
     return loss
 
 
-def train(loader, optimizer, generator, discriminator, encoder, comparator):
-    generator.train()
-    num_batches = 0
+
+def train(loader, optimizer, generator, discriminator, encoder, comparator, train_generator, train_discrimin):
+    
+    #generator.train() TODO: REMOVE.
+    #num_batches = 0
     loss_sum = 0
-    for i, (input, _) in enumerate(loader):
-        x = torch.autograd.Variable(input)
-        x = x.to(device)
 
-        # compute activation for image
-        a = encoder(x)
-        # breakpoint()
-        # compute output
-        x_hat = generator(a)
+    for i, (inp, tar) in enumerate(loader):
 
-        # compute activation for generated image
-        a_hat = encoder(x_hat)
+        # target = target.cuda(async=True) # TODO: ???
+        
+        input_var  = torch.autograd.Variable(inp)
+        target_var = torch.autograd.Variable(tar)
 
-        loss = generator_loss(a, a_hat, x, x_hat, comparator, discriminator)
+        # TODO: Set input_var and target_var to take in the device (cpu/cuda).
 
-        # print(loss)
-        # compute gradient and do SGD step
+
+        #
+        # 1) Feed forward the data into the encoder.
+        #
+        #    ( a )    =    enc ( x )
+        features_real = encoder(input_var)
+        
+        # TODO: The Cafe impln has something called recogn_feat_real here too...
+
+
+        #
+        # 2) Feed forward the data into the generator.
+        #
+        # ( x_hat )   =   gen ( a )
+        generator_out = generator(features_real)
+
+        # TODO: Should the generator take input_var or features_out??
+        
+
+        #
+        # 3) Encode the generated image for comparison of features.
+        #
+        # ( a_hat )    =    enc ( x_hat )
+        features_recog = encoder(generator_out)
+
+        
+        #
+        # TODO: Is this necessary?? Should Feeding of discriminator happen out here?? 
+        #       If so, how should it be done??
+        #
+        # 4) Run the discriminator on the real features to get the ___ (loss?)
+        #
+        # discrim_real = discriminator(input_var,     features_real)
+        # discrim_fake = discriminator(generator_out, features_real)
+        
+        
+        # TODO: gen_loss currently takes into account feature_loss, reconstruction_loss
+        #       and discriminator_loss. Should it not include some of these losses depending
+        #       on what kind of update we're doing? (i.e. gen+,dis+/gen+,dis-/gen-,dis+)
+        #
+        # TODO: if this is just the loss of the generator, do we also need to do the loss 
+        #       on the discriminator like above?
+        #
+        # 4) Compute the loss of the generator.
+        #
+        gen_loss = generator_loss(
+            a=features_real, 
+            a_hat=features_recog, 
+            x=input_var, 
+            x_hat=generator_out, 
+            comparator=comparator, 
+            discriminator=discriminator
+        )
+
+
+        #
+        # TODO: This is one possible way of turning on/off the weights for each network 
+        #
+        # 5) Enable/Disable weights depending on out of function switches.
+        #
+        # If train_x = True  : Parameters will be effected by grad-update.
+        # If train_x = False : Parameters will be uneffected by grad-update.
+        for gen_param in generator.parameters():
+            gen_param.requires_grad = train_generator
+        for dis_param in discriminator.parameters():
+            dis_param.requires_grad = train_discrimin
+
+
+        #
+        # 6) Compute the Gradient and do a SGD step.
+        #
         optimizer.zero_grad()
-        loss.backward()
+        gen_loss.backward()
         optimizer.step()
 
-    avg_loss = loss_sum / num_batches
+
+    #
+    # TODO: Figure out what to return here.
+    #
+
+    avg_loss = loss_sum
     # print(f'Avg loss: {avg_loss}')
-    return avg_loss
+    #return avg_loss # ???
+    
+    discr_real_loss = 0.0
+    discr_fake_loss = 0.0
+    discr_fake_for_generator_loss = 1.0
+    #return discr_real_loss, discr_fake_loss, discr_fake_for_generator_loss # ???
+    
+    discr_loss_ratio = (discr_real_loss + discr_fake_loss) / discr_fake_for_generator_loss
+    return discr_loss_ratio # ???
 
 
+
+# TODO: Work out validate function.
 def validate(loader, generator, encoder, comparator):
     generator.eval()
     num_batches = 0
@@ -79,18 +161,25 @@ def validate(loader, generator, encoder, comparator):
 
     avg_loss = loss_sum / num_batches
     # print(f'Avg loss: {avg_loss}')
+
     return avg_loss
 
+
+
 if __name__ == '__main__':
+    
     batch_size = 64
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') #TODO: Use ``device``` when initializing a variable instead of hardcoding it as ``.cuda()``.
 
     imagenet_transforms = transforms.Compose([
-                                 transforms.Scale(256),
-                                 transforms.CenterCrop(224),
-                                 transforms.ToTensor(),
-                                 transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-                             ])
+        transforms.Scale(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            mean=[0.485, 0.456, 0.406], 
+            std=[0.229, 0.224, 0.225]
+        ),
+    ])
 
     train_loader = torch.utils.data.DataLoader(
         datasets.ImageFolder('/home/shared/imagenet/train', imagenet_transforms),
@@ -106,7 +195,7 @@ if __name__ == '__main__':
         num_workers=8,
         pin_memory=True)
 
-    encoder = AlexNetEncoder()
+    encoder = AlexNetEncoder() #TODO: pass in ``device`` as arg?
     encoder.cuda()
     encoder.eval()
 
@@ -122,21 +211,57 @@ if __name__ == '__main__':
 
     optimizer = torch.optim.SGD(
         generator.parameters(),
-        0.1,
+        lr=0.1,
         momentum=0.9,
-        weight_decay=1e-4)
+        weight_decay=1e-4
+    )
 
     print('Beginning training...')
 
     avg_train_losses = []
-    avg_val_losses = []
-    for epoch in range(100):
-        avg_train_loss = train(train_loader, optimizer, generator, encoder, comparator)
-        avg_train_losses.append(avg_train_loss)
-        avg_val_loss = validate(val_loader, generator, encoder, comparator)
-        avg_val_losses.append(avg_val_loss)\
+    avg_valid_losses = []
 
-        print(f'Epoch {epoch}: avg_train_loss={avg_train_loss:.3f}, avg_val_loss={avg_val_loss:.3f}')
+    train_discrimin = True
+    train_generator = True
+
+    for epoch in range(100):
+    
+        avg_train_loss = train(
+            loader=train_loader, 
+            optimizer=optimizer, 
+            generator=generator,
+            discriminator=discriminator,
+            encoder=encoder, 
+            comparator=comparator,
+            train_generator=train_generator,
+            train_discrimin=train_discrimin
+        )
+        
+        avg_valid_loss = validate(
+            loader=val_loader, 
+            generator=generator, 
+            encoder=encoder, 
+            comparator=comparator
+        )
+        
+        avg_train_losses.append( avg_train_loss )
+        avg_valid_losses.append( avg_valid_loss )
+
+        
+        # Switch optimizing discriminator and generator, so that neither of them overfits too much
+        if avg_train_loss < 1e-1 and train_discrimin:
+            train_discrimin = False
+            train_generator = True
+
+        if avg_train_loss > 5e-1 and not train_discrimin:
+            train_discrimin = True
+            train_generator = True
+
+        if avg_train_loss > 1e1 and train_generator:
+            train_generator = False
+            train_discrimin = True
+
+        print(f'Epoch {epoch}: avg_train_loss={avg_train_loss:.3f}, avg_valid_loss={avg_valid_loss:.3f}')
 
         save_checkpoint({
             'epoch': epoch + 1,
