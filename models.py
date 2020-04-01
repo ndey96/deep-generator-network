@@ -23,7 +23,7 @@ class AlexNetEncoder(nn.Module):
 
     def __init__(self):
         super(AlexNetEncoder, self).__init__()
-        original_model = models.alexnet(pretrained=True)
+        original_model = alexnet(pretrained=True)
         self.features = torch.nn.DataParallel(original_model.features)
         self.avgpool = original_model.avgpool
         self.classifier = original_model.classifier[:5]
@@ -39,13 +39,13 @@ class AlexNetEncoder(nn.Module):
 class TransposeConvGenerator(nn.Module):
 
     def __init__(self):
-        super(Generator, self).__init__()
+        super(TransposeConvGenerator, self).__init__()
         # https://github.com/shijx12/DeepSim/blob/master/deepSimGAN/deepSimNet.py
         negative_slope = 0.3
         self.deconv_output_size = 256
         self.desired_output_size = 227
         self.fully_connected = nn.Sequential(
-            nn.Linear(input_size, 4096),
+            nn.Linear(4096, 4096),
             nn.LeakyReLU(negative_slope=negative_slope),
             nn.Linear(4096, 4096),
             nn.LeakyReLU(negative_slope=negative_slope),
@@ -129,12 +129,12 @@ class TransposeConvGenerator(nn.Module):
 class UpsampleConvGenerator(nn.Module):
 
     def __init__(self):
-        super(Generator, self).__init__()
+        super(UpsampleConvGenerator, self).__init__()
         negative_slope = 0.3
         self.deconv_output_size = 256
         self.desired_output_size = 227
         self.fully_connected = nn.Sequential(
-            nn.Linear(input_size, 4096),
+            nn.Linear(4096, 4096),
             nn.LeakyReLU(negative_slope=negative_slope),
             nn.Linear(4096, 4096),
             nn.LeakyReLU(negative_slope=negative_slope),
@@ -224,7 +224,7 @@ class UpsampleConvGenerator(nn.Module):
 class Discriminator(nn.Module):
 
     def __init__(self):
-        super(Generator, self).__init__()
+        super(Discriminator, self).__init__()
         negative_slope = 0.3
         self.conv = nn.Sequential(  # input: 227x227x3
             nn.Conv2d(
