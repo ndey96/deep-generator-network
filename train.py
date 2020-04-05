@@ -22,12 +22,37 @@ def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
 
 
 
-def generator_loss(a, a_hat, x, x_hat, comparator, discriminator):
-    deep_feature_loss = torch.sum((comparator(x) - comparator(x_hat)) ** 2)
-    reconstruction_loss = torch.sum((x - x_hat) ** 2)
-    discriminator_loss = discriminator(69) # TODO: Dis should take the input data (x) and features_real (a).
-    loss = discriminator_loss + 0.1 * deep_feature_loss + 0.001 * reconstruction_loss
-    return loss
+def generator_loss(a, a_hat, x, x_hat, comparator, discriminator, lambda_feat=0.01, lambda_adv=0.001, lambda_img=1.0):
+    '''
+        Input:
+         a      enc ( input )
+         a_hat  enc ( x_hat )
+         x      input
+         x_hat  gen ( enc (input) ) 
+    '''
+
+    # deep_feature_loss = torch.sum((comparator(x) - comparator(x_hat)) ** 2)
+    # reconstruction_loss = torch.sum((x - x_hat) ** 2)
+    # discriminator_loss = discriminator(69) 
+    # loss = discriminator_loss + 0.1 * deep_feature_loss + 0.001 * reconstruction_loss
+    
+    # Loss in feature space.
+    loss_feat = torch.sum( (comparator(x_hat) - comparator(x))**2 )
+
+    # Loss in image space.
+    loss_img = torch.sum( (x_hat - x)**2 )
+
+    # Adversarial losses.
+    gen_discr  = discriminator(x_hat, a)
+    real_discr = discriminator(x, a)
+
+    loss_discr = -1.0 * torch.sum( torch.log(real_discr) + torch.log(1.0 - gen_discr) )
+    loss_adv   = -1.0 * torch.sum( torch.log(gen_discr) )
+    
+    # Combine the losses for DeePSiM.
+    loss = lambda_feat * loss_feat + lambda_adv * loss_adv + lambda_img * loss_img
+
+    return loss, loss_discr
 
 
 
@@ -52,8 +77,6 @@ def train(loader, optimizer, generator, discriminator, encoder, comparator, trai
         #
         #    ( a )    =    enc ( x )
         features_real = encoder(input_var)
-        
-        # TODO: The Cafe impln has something called recogn_feat_real here too...
 
 
         #
@@ -81,17 +104,11 @@ def train(loader, optimizer, generator, discriminator, encoder, comparator, trai
         # discrim_real = discriminator(input_var,     features_real)
         # discrim_fake = discriminator(generator_out, features_real)
         
-        
-        # TODO: gen_loss currently takes into account feature_loss, reconstruction_loss
-        #       and discriminator_loss. Should it not include some of these losses depending
-        #       on what kind of update we're doing? (i.e. gen+,dis+/gen+,dis-/gen-,dis+)
-        #
-        # TODO: if this is just the loss of the generator, do we also need to do the loss 
-        #       on the discriminator like above?
+
         #
         # 4) Compute the loss of the generator.
         #
-        gen_loss = generator_loss(
+        gen_loss, discr_loss = generator_loss(
             a=features_real, 
             a_hat=features_recog, 
             x=input_var, 
