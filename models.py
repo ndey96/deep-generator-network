@@ -26,6 +26,7 @@ class AlexNetEncoder(nn.Module):
         original_model = alexnet(pretrained=True)
         self.features = torch.nn.DataParallel(original_model.features)
         self.avgpool = original_model.avgpool
+        # could be to six.
         self.classifier = original_model.classifier[:5]
 
     def forward(self, x):

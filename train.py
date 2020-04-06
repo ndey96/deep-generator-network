@@ -12,7 +12,8 @@ import torch.utils.data
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import numpy as np
-from models import Generator, Discriminator, AlexNetComparator, AlexNetEncoder
+from models import TransposeConvGenerator as Generator
+from models import Discriminator, AlexNetComparator, AlexNetEncoder
 
 
 def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
@@ -199,14 +200,14 @@ if __name__ == '__main__':
     ])
 
     train_loader = torch.utils.data.DataLoader(
-        datasets.ImageFolder('/home/shared/imagenet/train', imagenet_transforms),
+        datasets.ImageFolder('/home/torenvln/git/fastdata2/ilsvrc2012/training_images', imagenet_transforms),
         batch_size=batch_size,
         shuffle=True,
         num_workers=8,
         pin_memory=True)
 
     val_loader = torch.utils.data.DataLoader(
-        datasets.ImageFolder('/home/shared/imagenet/val', imagenet_transforms),
+        datasets.ImageFolder('/home/torenvln/git/fastdata2/ilsvrc2012/validation_images', imagenet_transforms),
         batch_size=batch_size,
         shuffle=False,
         num_workers=8,
