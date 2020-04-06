@@ -12,8 +12,12 @@ import torch.utils.data
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import numpy as np
+<<<<<<< HEAD
 from models import TransposeConvGenerator as Generator
 from models import Discriminator, AlexNetComparator, AlexNetEncoder
+=======
+from models import TransposeConvGenerator, UpsampleConvGenerator, Discriminator, AlexNetComparator, AlexNetEncoder
+>>>>>>> 0fd3e6f6c905552e93d5865973dd4dc60b0b0ed7
 
 
 def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
@@ -221,7 +225,7 @@ if __name__ == '__main__':
     comparator.cuda()
     comparator.eval()
 
-    generator = Generator()
+    generator = TransposeConvGenerator()
     generator.cuda()
 
     discriminator = Discriminator()
