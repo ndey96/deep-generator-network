@@ -13,14 +13,13 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import numpy as np
 from models import TransposeConvGenerator as Generator
-from models import Discriminator, AlexNetComparator, AlexNetEncoder
+from models import Discriminator, AlexNetComparator, AlexNetEncoder, TransposeConvGenerator
 
 
 def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
     torch.save(state, filename)
     if is_best:
         shutil.copyfile(filename, 'model_best.pth.tar')
-
 
 
 def generator_loss(a, a_hat, x, x_hat, comparator, discriminator, lambda_feat=0.01, lambda_adv=0.001, lambda_img=1.0):
