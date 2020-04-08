@@ -42,27 +42,6 @@ def compute_loss(a,
     '''
 
     # Loss in feature space.
-<<<<<<< HEAD
-    loss_feat = torch.sum( (comparator(x_hat) - comparator(x))**2 )
-    print("lf", loss_feat.size(), loss_feat.data)
-
-    # Loss in image space.
-    print("x", x.size(), x.data[0,0])
-    print("x_hat", x_hat.size(), x_hat.data[0,0])
-
-    loss_img = torch.sum( (x_hat - x)**2 )
-    print("li", loss_img.size(), loss_img.data)
-
-    # Adversarial losses.
-    real_discr = discriminator(x, a)
-    print('rd', real_discr.size(), real_discr.data[0])
-    gen_discr  = discriminator(x_hat, a)
-    print('gd', gen_discr.size(), gen_discr.data[0])
-    
-    loss_discr = -1.0 * torch.sum( torch.log(real_discr) + torch.log(1.0 - gen_discr) )
-    loss_adv   = -1.0 * torch.sum( torch.log(gen_discr) )
-    
-=======
     loss_feat = torch.sum((comparator(x_hat) - comparator(x))**2)
 
     # Loss in image space.
@@ -85,7 +64,6 @@ def compute_loss(a,
     #     torch.log(real_discr) + torch.log(1.0 - gen_discr))
     # loss_adv = -1.0 * torch.sum(torch.log(gen_discr))
 
->>>>>>> e6025cb601404c305ec2f19999cccb98ceeaef10
     # Combine the losses for DeePSiM.
     loss = lambda_feat * loss_feat + lambda_adv * loss_adv + lambda_img * loss_img
 
@@ -109,15 +87,8 @@ def train(loader, optim_gen, generator, optim_discr, discriminator, encoder,
         # target = target.cuda(async=True) # TODO [NICK]: Look into this for using your 30,000 GPUs.
 
         # Prime the input.
-<<<<<<< HEAD
-        print("1", inp.size())
-        input_var  = torch.autograd.Variable(inp)
-        input_var = input_var.to(device)
-        
-=======
         input_var = torch.autograd.Variable(inp)
         input_var = input_var.to(device)
->>>>>>> e6025cb601404c305ec2f19999cccb98ceeaef10
 
         #
         # 1) Feed forward the data into the encoder.
@@ -131,14 +102,6 @@ def train(loader, optim_gen, generator, optim_discr, discriminator, encoder,
         #
         # ( x_hat )   =   gen ( a )
         generator_out = generator(features_real)
-<<<<<<< HEAD
-        print("3go", generator_out.size())
-        print("3go", generator_out.data[0,0])
-        print("3fr", features_real.size())
-        print("3fr", features_real.data[0])
-
-=======
->>>>>>> e6025cb601404c305ec2f19999cccb98ceeaef10
 
         #
         # TODO: REMOVE.
@@ -151,27 +114,12 @@ def train(loader, optim_gen, generator, optim_discr, discriminator, encoder,
         #
         # 4) Compute the loss of the generator.
         #
-<<<<<<< HEAD
-        gen_loss, discr_loss, (real_discr, gen_discr) = generator_loss(
-            a=features_real, 
-            x=input_var, 
-            x_hat=generator_out, 
-            comparator=comparator, 
-            discriminator=discriminator
-        )
-        print("4", gen_loss.size(), gen_loss.data)
-        print("5", discr_loss.size(), discr_loss.data)
-        print("6", real_discr.size(), real_discr.data[0,:])
-        print("7", gen_discr.size(), gen_discr.data[0,:])
-
-=======
         gen_loss, discr_loss, (real_discr, gen_discr) = compute_loss(
             a=features_real,
             x=input_var,
             x_hat=generator_out,
             comparator=comparator,
             discriminator=discriminator)
->>>>>>> e6025cb601404c305ec2f19999cccb98ceeaef10
 
         #
         # 5) Compute the gradient and take a step.
@@ -204,12 +152,9 @@ def train(loader, optim_gen, generator, optim_discr, discriminator, encoder,
         #
         # discr_loss_ratio = ( real_discr + gen_discr ) / discr_loss
 
-<<<<<<< HEAD
-=======
         print("real_discr", type(real_discr), real_discr.size())
         print("gen_disc", type(gen_discr), gen_discr.size())
 
->>>>>>> e6025cb601404c305ec2f19999cccb98ceeaef10
         # if discr_loss_ratio < 1e-1 and train_discrimin:
         #     train_discrimin = False
         #     train_generator = True
@@ -297,13 +242,8 @@ def validate(loader, generator, discriminator, encoder, comparator, device,
 
 
 if __name__ == '__main__':
-<<<<<<< HEAD
     
-    batch_size = 64
-=======
-
     batch_size = 8
->>>>>>> e6025cb601404c305ec2f19999cccb98ceeaef10
     torch.cuda.empty_cache()
     device = torch.device(
         'cuda' if torch.cuda.is_available() else 'cpu'
