@@ -52,7 +52,8 @@ def compute_loss(a,
     gen_discr = discriminator(x_hat, a)  # D(G(x)) = z from notebook
 
     # stabilized loss from notebook
-    loss_adv = -torch.sum(nn.logSoftmax(gen_discr))
+    test = nn.LogSoftmax(gen_discr)
+    loss_adv = -torch.sum(test)
     c = torch.max(gen_discr)
     softmax_denom = torch.sum(torch.exp(gen_discr - c))
     loss_discr = -torch.sum(
