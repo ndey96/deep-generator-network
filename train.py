@@ -3,6 +3,7 @@ import os
 import shutil
 import time
 
+import GPUtil
 import torch
 import torch.nn as nn
 import torch.nn.parallel
@@ -134,21 +135,27 @@ def train(loader, optim_gen, generator, optim_discr, discriminator, encoder, com
         #
         # 7) Switch optimizing discriminator and generator, so that neither of them overfits too much.
         #
-        discr_loss_ratio = ( real_discr + gen_discr ) / discr_loss
+        # discr_loss_ratio = ( real_discr + gen_discr ) / discr_loss
 
-        print(type(discr_loss_ratio), discr_loss_ratio.size())
 
-        if discr_loss_ratio < 1e-1 and train_discrimin:
-            train_discrimin = False
-            train_generator = True
+        print("real_discr", type(real_discr), real_discr.size())
+        print("gen_disc", type(gen_discr), gen_discr.size())
 
-        if discr_loss_ratio > 5e-1 and not train_discrimin:
-            train_discrimin = True
-            train_generator = True
 
-        if discr_loss_ratio > 1e1 and train_generator:
-            train_generator = False
-            train_discrimin = True
+        # if discr_loss_ratio < 1e-1 and train_discrimin:
+        #     train_discrimin = False
+        #     train_generator = True
+
+        # if discr_loss_ratio > 5e-1 and not train_discrimin:
+        #     train_discrimin = True
+        #     train_generator = True
+
+        # if discr_loss_ratio > 1e1 and train_generator:
+        #     train_generator = False
+        #     train_discrimin = True
+        train_discrimin = True
+        train_generator = True
+        
 
 
     gen_loss_sum /= num_batches
@@ -233,7 +240,7 @@ def validate(loader, generator, discriminator, encoder, comparator, device, verb
 
 if __name__ == '__main__':
     
-    batch_size = 64
+    batch_size = 8
     torch.cuda.empty_cache()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') #TODO: Use ``device``` when initializing a variable instead of hardcoding it as ``.cuda()``.
     writer = SummaryWriter()
@@ -264,19 +271,35 @@ if __name__ == '__main__':
 
 
     # Init the models.
-    encoder = AlexNetEncoder() #TODO: pass in ``device`` as arg?
-    encoder.cuda()
-    encoder.eval()
+    if torch.cuda.device_count() > 1:
+        encoder = nn.DataParallel(AlexNetEncoder())
+        encoder.to(device)
+        encoder.eval()
 
-    comparator = AlexNetComparator()
-    comparator.cuda()
-    comparator.eval()
+        comparator = nn.DataParallel(AlexNetComparator())
+        encoder.to(device)
+        comparator.eval()
 
-    generator = TransposeConvGenerator()
-    generator.cuda()
+        generator = nn.DataParallel(TransposeConvGenerator())
+        encoder.to(device)
 
-    discriminator = Discriminator()
-    discriminator.cuda()
+        discriminator = nn.DataParallel(Discriminator())
+        encoder.to(device)
+
+    else:
+        encoder = AlexNetEncoder()
+        encoder.cuda()
+        encoder.eval()
+
+        comparator = AlexNetComparator()
+        comparator.cuda()
+        comparator.eval()
+
+        generator = TransposeConvGenerator()
+        generator.cuda()
+
+        discriminator = Discriminator()
+        discriminator.cuda()
 
 
     # Set up the optimizers.
