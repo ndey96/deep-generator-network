@@ -34,13 +34,20 @@ def generator_loss(a, x, x_hat, comparator, discriminator, lambda_feat=0.01, lam
 
     # Loss in feature space.
     loss_feat = torch.sum( (comparator(x_hat) - comparator(x))**2 )
+    print("lf", loss_feat.size(), loss_feat.data)
 
     # Loss in image space.
+    print("x", x.size(), x.data[0,0])
+    print("x_hat", x_hat.size(), x_hat.data[0,0])
+
     loss_img = torch.sum( (x_hat - x)**2 )
+    print("li", loss_img.size(), loss_img.data)
 
     # Adversarial losses.
     real_discr = discriminator(x, a)
+    print('rd', real_discr.size(), real_discr.data[0])
     gen_discr  = discriminator(x_hat, a)
+    print('gd', gen_discr.size(), gen_discr.data[0])
     
     loss_discr = -1.0 * torch.sum( torch.log(real_discr) + torch.log(1.0 - gen_discr) )
     loss_adv   = -1.0 * torch.sum( torch.log(gen_discr) )
@@ -68,15 +75,17 @@ def train(loader, optim_gen, generator, optim_discr, discriminator, encoder, com
         # target = target.cuda(async=True) # TODO [NICK]: Look into this for using your 30,000 GPUs.
         
         # Prime the input.
+        print("1", inp.size())
         input_var  = torch.autograd.Variable(inp)
         input_var = input_var.to(device)
-
+        
 
         #
         # 1) Feed forward the data into the encoder.
         #
         #    ( a )    =    enc ( x )
         features_real = encoder(input_var)
+        print("2", features_real.size())
 
 
         #
@@ -84,7 +93,11 @@ def train(loader, optim_gen, generator, optim_discr, discriminator, encoder, com
         #
         # ( x_hat )   =   gen ( a )
         generator_out = generator(features_real)
-        
+        print("3go", generator_out.size())
+        print("3go", generator_out.data[0,0])
+        print("3fr", features_real.size())
+        print("3fr", features_real.data[0])
+
 
         #
         # TODO: REMOVE.
@@ -105,6 +118,10 @@ def train(loader, optim_gen, generator, optim_discr, discriminator, encoder, com
             comparator=comparator, 
             discriminator=discriminator
         )
+        print("4", gen_loss.size(), gen_loss.data)
+        print("5", discr_loss.size(), discr_loss.data)
+        print("6", real_discr.size(), real_discr.data[0,:])
+        print("7", gen_discr.size(), gen_discr.data[0,:])
 
 
         #
@@ -126,6 +143,8 @@ def train(loader, optim_gen, generator, optim_discr, discriminator, encoder, com
         #
         gen_loss_sum += gen_loss
         discr_loss_sum += discr_loss
+        print("updatecounters", gen_loss_sum, gen_loss_sum.data)
+        print("updatecounters", discr_loss_sum, discr_loss_sum.data)
         num_batches += 1
 
 
@@ -136,11 +155,6 @@ def train(loader, optim_gen, generator, optim_discr, discriminator, encoder, com
         # 7) Switch optimizing discriminator and generator, so that neither of them overfits too much.
         #
         # discr_loss_ratio = ( real_discr + gen_discr ) / discr_loss
-
-
-        print("real_discr", type(real_discr), real_discr.size())
-        print("gen_disc", type(gen_discr), gen_discr.size())
-
 
         # if discr_loss_ratio < 1e-1 and train_discrimin:
         #     train_discrimin = False
@@ -240,7 +254,7 @@ def validate(loader, generator, discriminator, encoder, comparator, device, verb
 
 if __name__ == '__main__':
     
-    batch_size = 8
+    batch_size = 64
     torch.cuda.empty_cache()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') #TODO: Use ``device``` when initializing a variable instead of hardcoding it as ``.cuda()``.
     writer = SummaryWriter()
@@ -271,35 +285,35 @@ if __name__ == '__main__':
 
 
     # Init the models.
-    if torch.cuda.device_count() > 1:
-        encoder = nn.DataParallel(AlexNetEncoder())
-        encoder.to(device)
-        encoder.eval()
+    # if torch.cuda.device_count() > 1:
+    #     encoder = nn.DataParallel(AlexNetEncoder())
+    #     encoder.to(device)
+    #     encoder.eval()
 
-        comparator = nn.DataParallel(AlexNetComparator())
-        encoder.to(device)
-        comparator.eval()
+    #     comparator = nn.DataParallel(AlexNetComparator())
+    #     encoder.to(device)
+    #     comparator.eval()
 
-        generator = nn.DataParallel(TransposeConvGenerator())
-        encoder.to(device)
+    #     generator = nn.DataParallel(TransposeConvGenerator())
+    #     encoder.to(device)
 
-        discriminator = nn.DataParallel(Discriminator())
-        encoder.to(device)
+    #     discriminator = nn.DataParallel(Discriminator())
+    #     encoder.to(device)
 
-    else:
-        encoder = AlexNetEncoder()
-        encoder.cuda()
-        encoder.eval()
+    encoder = AlexNetEncoder()
+    encoder.cuda()
+    encoder.eval()
 
-        comparator = AlexNetComparator()
-        comparator.cuda()
-        comparator.eval()
+    comparator = AlexNetComparator()
+    comparator.cuda()
+    comparator.eval()
 
-        generator = TransposeConvGenerator()
-        generator.cuda()
+    generator = TransposeConvGenerator()
+    generator.cuda()
 
-        discriminator = Discriminator()
-        discriminator.cuda()
+    discriminator = Discriminator()
+    discriminator.cuda()
+
 
 
     # Set up the optimizers.
