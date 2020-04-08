@@ -52,12 +52,12 @@ def compute_loss(a,
     gen_discr = discriminator(x_hat, a)  # D(G(x)) = z from notebook
 
     # stabilized loss from notebook
-    test = nn.LogSoftmax(gen_discr)
-    loss_adv = -torch.sum(test)
+    smax = nn.LogSoftmax()
+    loss_adv = -torch.sum(smax(gen_discr))
     c = torch.max(gen_discr)
     softmax_denom = torch.sum(torch.exp(gen_discr - c))
     loss_discr = -torch.sum(
-        nn.logSoftmax(real_discr) + torch.log(softmax_denom - torch.exp(
+        smax(real_discr) + torch.log(softmax_denom - torch.exp(
             gen_discr - c)) - torch.log(softmax_denom))
 
     # old loss implementation
@@ -96,7 +96,6 @@ def train(loader, optim_gen, generator, optim_discr, discriminator, encoder,
         #
         #    ( a )    =    enc ( x )
         features_real = encoder(input_var)
-        print("2", features_real.size())
 
         #
         # 2) Feed forward the data into the generator.
@@ -140,8 +139,6 @@ def train(loader, optim_gen, generator, optim_discr, discriminator, encoder,
         #
         gen_loss_sum += gen_loss
         discr_loss_sum += discr_loss
-        print("updatecounters", gen_loss_sum, gen_loss_sum.data)
-        print("updatecounters", discr_loss_sum, discr_loss_sum.data)
         num_batches += 1
 
         if verbose:
@@ -153,8 +150,6 @@ def train(loader, optim_gen, generator, optim_discr, discriminator, encoder,
         #
         # discr_loss_ratio = ( real_discr + gen_discr ) / discr_loss
 
-        print("real_discr", type(real_discr), real_discr.size())
-        print("gen_disc", type(gen_discr), gen_discr.size())
 
         # if discr_loss_ratio < 1e-1 and train_discrimin:
         #     train_discrimin = False
