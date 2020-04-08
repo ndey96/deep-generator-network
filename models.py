@@ -32,14 +32,10 @@ class AlexNetEncoder(nn.Module):
         self.classifier = original_model.classifier[:5]
 
     def forward(self, x):
-        print("1",x.size())
-        # x = center_crop(x, self.deconv_output_size,
-        #         self.desired_output_size)  # 227x227x3
         x = self.features(x)
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
         x = self.classifier(x)
-        print("2",x.size())
         return x
 
 
@@ -267,6 +263,7 @@ class Discriminator(nn.Module):
                 stride=2,
                 padding=0),  # 12x12x256
             nn.AvgPool2d(kernel_size=12, stride=12))  # 1x1x256
+
         self.features_fc = nn.Sequential(  # input: 4096
             nn.Linear(4096, 1024),
             nn.LeakyReLU(negative_slope=negative_slope),
@@ -285,7 +282,6 @@ class Discriminator(nn.Module):
         x1 = self.conv(image)  # 1x1x256
         x1 = torch.flatten(x1, 1)  # 256
         x2 = self.features_fc(features)  # 512
-
         x = torch.cat((x1, x2), dim=1)  # 768
         x = self.fc(x)  # 2
         return x

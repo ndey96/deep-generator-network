@@ -14,7 +14,8 @@ import torchvision.datasets as datasets
 import numpy as np
 from models import TransposeConvGenerator as Generator
 from models import Discriminator, AlexNetComparator, AlexNetEncoder, TransposeConvGenerator
-
+import torchvision
+from torch.utils.tensorboard import SummaryWriter
 
 def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
     torch.save(state, filename)
@@ -51,7 +52,7 @@ def generator_loss(a, x, x_hat, comparator, discriminator, lambda_feat=0.01, lam
 
 
 def train(loader, optim_gen, generator, optim_discr, discriminator, encoder, comparator, train_generator, train_discrimin, device, verbose):
-    
+    # Start tensorboard 
     # Put in training mode.
     generator.train()
     discriminator.train()
@@ -110,12 +111,12 @@ def train(loader, optim_gen, generator, optim_discr, discriminator, encoder, com
         #
         if train_generator:
             optim_gen.zero_grad()
-            gen_loss.backward()
+            gen_loss.backward(retain_graph=True)
             optim_gen.step()
 
         if train_discrimin:
             optim_discr.zero_grad()
-            discr_loss.backward()
+            discr_loss.backward(retain_graph=True)
             optim_discr.step()
 
 
@@ -134,6 +135,8 @@ def train(loader, optim_gen, generator, optim_discr, discriminator, encoder, com
         # 7) Switch optimizing discriminator and generator, so that neither of them overfits too much.
         #
         discr_loss_ratio = ( real_discr + gen_discr ) / discr_loss
+
+        print(type(discr_loss_ratio), discr_loss_ratio.size())
 
         if discr_loss_ratio < 1e-1 and train_discrimin:
             train_discrimin = False
@@ -231,11 +234,13 @@ def validate(loader, generator, discriminator, encoder, comparator, device, verb
 if __name__ == '__main__':
     
     batch_size = 64
+    torch.cuda.empty_cache()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') #TODO: Use ``device``` when initializing a variable instead of hardcoding it as ``.cuda()``.
+    writer = SummaryWriter()
 
     imagenet_transforms = transforms.Compose([
         transforms.Scale(256),
-        transforms.CenterCrop(224),
+        transforms.CenterCrop(227),
         transforms.ToTensor(),
         transforms.Normalize(
             mean=[0.485, 0.456, 0.406], 
@@ -282,10 +287,10 @@ if __name__ == '__main__':
         weight_decay=1e-4
     )
 
-    optim_discr = torch.optim.adam(
+    optim_discr = torch.optim.Adam(
         discriminator.parameters(),
         lr=0.0002,
-        momentum=0.9,
+        betas=(0.9,0.999),
         weight_decay=1e-4
     )
 
@@ -299,9 +304,11 @@ if __name__ == '__main__':
     avg_valid_gen_losses   = []
     avg_valid_discr_losses = []
 
-
     train_generator = True
     train_discrimin = True
+
+    # dummy_input = torch.rand(64, 3, 224, 224)
+    # writer.add_graph(encoder, (dummy_input, ))
 
     verbose=True
     for epoch in range(100):
@@ -346,3 +353,5 @@ if __name__ == '__main__':
             'state_dict_gen'   : generator.state_dict(),
             'state_dict_discr' : discriminator.state_dict(),
         }, is_best=False)
+        writer.flush()
+    writer.close()
