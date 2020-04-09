@@ -48,12 +48,12 @@ class TransposeConvGenerator(nn.Module):
         self.deconv_output_size = 256
         self.desired_output_size = 227
         self.fully_connected = nn.Sequential(
-            nn.Linear(4096, 4096),                          
-            nn.LeakyReLU(negative_slope=negative_slope),    #defc7
-            nn.Linear(4096, 4096),                          
-            nn.LeakyReLU(negative_slope=negative_slope),    #defc6
-            nn.Linear(4096, 4096),                          
-            nn.LeakyReLU(negative_slope=negative_slope),    #defc5
+            nn.Linear(4096, 4096),
+            nn.LeakyReLU(negative_slope=negative_slope),  #defc7
+            nn.Linear(4096, 4096),
+            nn.LeakyReLU(negative_slope=negative_slope),  #defc6
+            nn.Linear(4096, 4096),
+            nn.LeakyReLU(negative_slope=negative_slope),  #defc5
         )
         self.deconv = nn.Sequential(
             nn.ConvTranspose2d(
@@ -62,56 +62,56 @@ class TransposeConvGenerator(nn.Module):
                 kernel_size=4,
                 stride=2,
                 padding=1),  # 8x8x256
-            nn.LeakyReLU(negative_slope=negative_slope),    #deconv5 
+            nn.LeakyReLU(negative_slope=negative_slope),  #deconv5
             nn.Conv2d(
                 in_channels=256,
                 out_channels=512,
                 kernel_size=3,
                 stride=1,
                 padding=1),  # 8x8x512
-            nn.LeakyReLU(negative_slope=negative_slope),    #deconv5_1 
+            nn.LeakyReLU(negative_slope=negative_slope),  #deconv5_1
             nn.ConvTranspose2d(
                 in_channels=512,
                 out_channels=256,
                 kernel_size=4,
                 stride=2,
                 padding=1),  # 16x16x256
-            nn.LeakyReLU(negative_slope=negative_slope),    #deconv4 
+            nn.LeakyReLU(negative_slope=negative_slope),  #deconv4
             nn.Conv2d(
                 in_channels=256,
                 out_channels=256,
                 kernel_size=3,
                 stride=1,
                 padding=1),  # 16x16x256
-            nn.LeakyReLU(negative_slope=negative_slope),    #deconv4_1
+            nn.LeakyReLU(negative_slope=negative_slope),  #deconv4_1
             nn.ConvTranspose2d(
                 in_channels=256,
                 out_channels=128,
                 kernel_size=4,
                 stride=2,
                 padding=1),  # 32x32x128
-            nn.LeakyReLU(negative_slope=negative_slope),    #deconv3 
+            nn.LeakyReLU(negative_slope=negative_slope),  #deconv3
             nn.Conv2d(
                 in_channels=128,
                 out_channels=128,
                 kernel_size=3,
                 stride=1,
                 padding=1),  # 32x32x128
-            nn.LeakyReLU(negative_slope=negative_slope),    #deconv3_1 
+            nn.LeakyReLU(negative_slope=negative_slope),  #deconv3_1
             nn.ConvTranspose2d(
                 in_channels=128,
                 out_channels=64,
                 kernel_size=4,
                 stride=2,
                 padding=1),  # 64x64x64
-            nn.LeakyReLU(negative_slope=negative_slope),    #deconv2
+            nn.LeakyReLU(negative_slope=negative_slope),  #deconv2
             nn.ConvTranspose2d(
                 in_channels=64,
                 out_channels=32,
                 kernel_size=4,
                 stride=2,
                 padding=1),  # 128x128x32
-            nn.LeakyReLU(negative_slope=negative_slope),    #deconv1
+            nn.LeakyReLU(negative_slope=negative_slope),  #deconv1
             nn.ConvTranspose2d(
                 in_channels=32,
                 out_channels=3,
@@ -275,7 +275,7 @@ class Discriminator(nn.Module):
             nn.Linear(768, 512),
             nn.LeakyReLU(negative_slope=negative_slope),
             nn.Dropout(0.5),
-            nn.Linear(512, 2),
+            nn.Linear(512, 1),
         )
 
     def forward(self, image, features):
@@ -283,5 +283,5 @@ class Discriminator(nn.Module):
         x1 = torch.flatten(x1, 1)  # 256
         x2 = self.features_fc(features)  # 512
         x = torch.cat((x1, x2), dim=1)  # 768
-        x = self.fc(x)  # 2
+        x = self.fc(x)  # 1
         return x
