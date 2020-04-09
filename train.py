@@ -36,6 +36,7 @@ def compute_loss(a,
                  x_hat,
                  comparator,
                  discriminator,
+                 bce_logits_loss,
                  lambda_feat=0.01,
                  lambda_adv=0.001,
                  lambda_img=1.0):
@@ -54,15 +55,13 @@ def compute_loss(a,
     loss_img = torch.sum((x_hat - x)**2)
 
     # Adversarial losses.
-    real_discr = discriminator(x, a)  # D(y) [batch_size,1]
-    gen_discr = discriminator(x_hat,
-                              a)  # D(G(x)) = z from notebook [batch_size,1]
+    real_discr = torch.flatten(discriminator(x, a))  # D(y) [batch_size,1]
+    gen_discr = torch.flatten(discriminator(x_hat,a))  # D(G(x)) = z from notebook [batch_size,1]
 
     # stabilized sigmoid loss
-    bce_logits_loss = nn.BCEWithLogitsLoss(reduction='sum')
-    loss_adv = bce_logits_loss(gen_discr, torch.ones(64))
-    loss_discr = bce_logits_loss(real_discr, torch.ones(64)) + bce_logits_loss(
-        gen_discr, torch.zeros(64))
+    loss_adv = bce_logits_loss(gen_discr, torch.ones(64).to(device))
+    loss_discr = bce_logits_loss(real_discr, torch.ones(64).to(device)) + bce_logits_loss(
+        gen_discr, torch.zeros(64).to(device))
 
     # g_fake_loss = tf.nn.sigmoid_cross_entropy_with_logits(
     #         logits=self.fake_score_logit,
@@ -101,7 +100,8 @@ def compute_loss(a,
 
 
 def train(loader, optim_gen, generator, optim_discr, discriminator, encoder,
-          comparator, train_generator, train_discrimin, device, verbose):
+          comparator, train_generator, train_discrimin, bce_logits_loss,
+          device, verbose):
     # Start tensorboard
     # Put in training mode.
     generator.train()
@@ -148,7 +148,8 @@ def train(loader, optim_gen, generator, optim_discr, discriminator, encoder,
             x=input_var,
             x_hat=generator_out,
             comparator=comparator,
-            discriminator=discriminator)
+            discriminator=discriminator,
+            bce_logits_loss=bce_logits_loss)
 
         #
         # 5) Compute the gradient and take a step.
@@ -328,6 +329,9 @@ if __name__ == '__main__':
     discriminator = Discriminator()
     discriminator.cuda()
 
+    bce_logits_loss = nn.BCEWithLogitsLoss(reduction='sum')
+    bce_logits_loss.cuda()
+
     # Set up the optimizers.
     optim_gen = torch.optim.SGD(
         generator.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)
@@ -366,6 +370,7 @@ if __name__ == '__main__':
             comparator=comparator,
             train_generator=train_generator,
             train_discrimin=train_discrimin,
+            bce_logits_loss=bce_logits_loss,
             device=device,
             verbose=verbose)
 
