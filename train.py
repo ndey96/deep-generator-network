@@ -148,22 +148,19 @@ def train(loader, optim_gen, generator, optim_discr, discriminator, encoder,
         #
         # 7) Switch optimizing discriminator and generator, so that neither of them overfits too much.
         #
-        # discr_loss_ratio = ( real_discr + gen_discr ) / discr_loss
+        discr_loss_ratio = torch.mean(( real_discr + gen_discr ) / discr_loss)
 
+        if discr_loss_ratio < 1e-1 and train_discrimin:
+            train_discrimin = False
+            train_generator = True
 
-        # if discr_loss_ratio < 1e-1 and train_discrimin:
-        #     train_discrimin = False
-        #     train_generator = True
+        if discr_loss_ratio > 5e-1 and not train_discrimin:
+            train_discrimin = True
+            train_generator = True
 
-        # if discr_loss_ratio > 5e-1 and not train_discrimin:
-        #     train_discrimin = True
-        #     train_generator = True
-
-        # if discr_loss_ratio > 1e1 and train_generator:
-        #     train_generator = False
-        #     train_discrimin = True
-        train_discrimin = True
-        train_generator = True
+        if discr_loss_ratio > 1e1 and train_generator:
+            train_generator = False
+            train_discrimin = True
 
     gen_loss_sum /= num_batches
     discr_loss_sum /= num_batches
@@ -239,7 +236,7 @@ def validate(loader, generator, discriminator, encoder, comparator, device,
 
 if __name__ == '__main__':
     
-    batch_size = 8
+    batch_size = 64
     torch.cuda.empty_cache()
     device = torch.device(
         'cuda' if torch.cuda.is_available() else 'cpu'
