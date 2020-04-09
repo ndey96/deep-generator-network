@@ -45,6 +45,7 @@ def compute_loss(a,
     loss_feat = torch.sum((comparator(x_hat) - comparator(x))**2)
 
     # Loss in image space.
+    print("torch.sum(x), torch.sum(x_hat)", torch.sum(x).item(), torch.sum(x_hat).item())
     loss_img = torch.sum((x_hat - x)**2)
 
     # Adversarial losses.
@@ -67,6 +68,7 @@ def compute_loss(a,
 
     # Combine the losses for DeePSiM.
     loss = lambda_feat * loss_feat + lambda_adv * loss_adv + lambda_img * loss_img
+    # print("(loss_feat, loss_adv, loss_img)",(loss_feat.item(), loss_adv.item(), loss_img.item()))
 
     return loss, loss_discr, (real_discr, gen_discr)
 

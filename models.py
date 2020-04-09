@@ -13,9 +13,13 @@ class AlexNetComparator(nn.Module):
         self.avgpool = original_model.avgpool
 
     def forward(self, x):
+        # print("00AlexNetComparator", x.size())
         x = self.features(x)
+        # print("01AlexNetComparator", x.size())
         x = self.avgpool(x)
+        # print("02AlexNetComparator", x.size())
         x = torch.flatten(x, 1)
+        # print("03AlexNetComparator", x.size())
         return x
 
 
@@ -31,11 +35,17 @@ class AlexNetEncoder(nn.Module):
         # could be to six.
         self.classifier = original_model.classifier[:5]
 
+
     def forward(self, x):
+        # print("00AlexNetEncoder", x.size())
         x = self.features(x)
+        # print("01AlexNetEncoder", x.size())
         x = self.avgpool(x)
+        # print("02AlexNetEncoder", x.size())
         x = torch.flatten(x, 1)
+        # print("03AlexNetEncoder", x.size())
         x = self.classifier(x)
+        # print("04AlexNetEncoder", x.size())
         return x
 
 
