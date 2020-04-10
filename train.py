@@ -51,7 +51,7 @@ def compute_loss(a,
     loss_feat = torch.sum((comparator(x_hat) - comparator(x))**2)
 
     # Loss in image space.
-    print("torch.sum(x), torch.sum(x_hat)", torch.sum(x).item(), torch.sum(x_hat).item())
+    # print("torch.sum(x), torch.sum(x_hat)", torch.sum(x).item(), torch.sum(x_hat).item())
     loss_img = torch.sum((x_hat - x)**2)
 
     # Adversarial losses.
@@ -59,38 +59,11 @@ def compute_loss(a,
     gen_discr = torch.flatten(discriminator(x_hat,a))  # D(G(x)) = z from notebook [batch_size,1]
 
     # stabilized sigmoid loss
-    loss_adv = bce_logits_loss(gen_discr, torch.ones(64).to(device))
-    loss_discr = bce_logits_loss(real_discr, torch.ones(64).to(device)) + bce_logits_loss(
-        gen_discr, torch.zeros(64).to(device))
-
-    # g_fake_loss = tf.nn.sigmoid_cross_entropy_with_logits(
-    #         logits=self.fake_score_logit,
-    #         labels=tf.ones_like(self.fake_score_logit)
-    #         )
-    # self.gen_dis_loss = tf.reduce_mean(g_fake_loss)
-    # d_real_loss = tf.nn.sigmoid_cross_entropy_with_logits(
-    #         logits=self.real_score_logit,
-    #         labels=tf.ones_like(self.real_score_logit)
-    #         )
-    # d_fake_loss = tf.nn.sigmoid_cross_entropy_with_logits(
-    #         logits=self.fake_score_logit,
-    #         labels=tf.zeros_like(self.fake_score_logit)
-    #         )
-    # self.dis_loss = tf.reduce_mean(d_real_loss + d_fake_loss)
-
-    # stabilized loss from notebook
-    # smax = nn.LogSoftmax()
-    # loss_adv = -torch.sum(smax(gen_discr))
-    # c = torch.max(gen_discr)
-    # softmax_denom = torch.sum(torch.exp(gen_discr - c))
-    # loss_discr = -torch.sum(
-    #     smax(real_discr) + torch.log(softmax_denom - torch.exp(
-    #         gen_discr - c)) - torch.log(softmax_denom))
-
-    # old loss implementation
-    # loss_discr = -1.0 * torch.sum(
-    #     torch.log(real_discr) + torch.log(1.0 - gen_discr))
-    # loss_adv = -1.0 * torch.sum(torch.log(gen_discr))
+    # t_ones = torch.ones(gen_discr.size())
+    # t_zeros = torch.zeros(gen_discr.size())
+    loss_adv = bce_logits_loss(gen_discr, gen_discr/gen_discr)
+    loss_discr = bce_logits_loss(real_discr, gen_discr/gen_discr + bce_logits_loss(
+        gen_discr, gen_discr - gen_discr))
 
     # Combine the losses for DeePSiM.
     loss = lambda_feat * loss_feat + lambda_adv * loss_adv + lambda_img * loss_img
@@ -104,13 +77,14 @@ def train(loader, optim_gen, generator, optim_discr, discriminator, encoder,
           device, verbose):
     # Start tensorboard
     # Put in training mode.
-    generator.train()
-    discriminator.train()
+
 
     # Set up some counters.
     gen_loss_sum = 0.0
     discr_loss_sum = 0.0
     num_batches = 0
+
+
 
     for i, (inp, _) in enumerate(loader):
 
@@ -167,8 +141,9 @@ def train(loader, optim_gen, generator, optim_discr, discriminator, encoder,
         #
         # 6) Update counters.
         #
-        gen_loss_sum += gen_loss
-        discr_loss_sum += discr_loss
+        with torch.no_grad():
+            gen_loss_sum += gen_loss
+            discr_loss_sum += discr_loss
         num_batches += 1
 
         if verbose:
@@ -267,11 +242,10 @@ def validate(loader, generator, discriminator, encoder, comparator, device,
 if __name__ == '__main__':
 
     batch_size = 64
-    torch.cuda.empty_cache()
     device = torch.device(
         'cuda' if torch.cuda.is_available() else 'cpu'
-    )  #TODO: Use ``device``` when initializing a variable instead of hardcoding it as ``.cuda()``.
-    writer = SummaryWriter()
+    )  
+    # writer = SummaryWriter()
 
     imagenet_transforms = transforms.Compose([
         transforms.Scale(256),
@@ -280,6 +254,7 @@ if __name__ == '__main__':
         transforms.Normalize(
             mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
+
 
     train_loader = torch.utils.data.DataLoader(
         datasets.ImageFolder(
@@ -299,38 +274,18 @@ if __name__ == '__main__':
         num_workers=8,
         pin_memory=True)
 
-    # Init the models.
-    # if torch.cuda.device_count() > 1:
-    #     encoder = nn.DataParallel(AlexNetEncoder())
-    #     encoder.to(device)
-    #     encoder.eval()
 
-    #     comparator = nn.DataParallel(AlexNetComparator())
-    #     encoder.to(device)
-    #     comparator.eval()
-
-    #     generator = nn.DataParallel(TransposeConvGenerator())
-    #     encoder.to(device)
-
-    #     discriminator = nn.DataParallel(Discriminator())
-    #     encoder.to(device)
-
-    encoder = AlexNetEncoder()
-    encoder.cuda()
+    encoder = AlexNetEncoder().cuda()
     encoder.eval()
 
-    comparator = AlexNetComparator()
-    comparator.cuda()
+    comparator = AlexNetComparator().cuda()
     comparator.eval()
 
-    generator = TransposeConvGenerator()
-    generator.cuda()
+    generator = TransposeConvGenerator().cuda()
 
-    discriminator = Discriminator()
-    discriminator.cuda()
+    discriminator = Discriminator().cuda()
 
-    bce_logits_loss = nn.BCEWithLogitsLoss(reduction='sum')
-    bce_logits_loss.cuda()
+    bce_logits_loss = nn.BCEWithLogitsLoss(reduction='sum').cuda()
 
     # Set up the optimizers.
     optim_gen = torch.optim.SGD(
@@ -354,10 +309,9 @@ if __name__ == '__main__':
     train_generator = True
     train_discrimin = True
 
-    # dummy_input = torch.rand(64, 3, 224, 224)
-    # writer.add_graph(encoder, (dummy_input, ))
-
     verbose = True
+    generator.train()
+    discriminator.train()
     for epoch in range(100):
 
         train_gen_loss, train_discr_loss, train_generator, train_discrimin = train(
@@ -384,11 +338,11 @@ if __name__ == '__main__':
             verbose=verbose)
 
         #TODO [NICK]: Set up torchvision/tensorboard to visualize these lists??
-        avg_train_gen_losses.append(train_gen_loss)
-        avg_train_discr_losses.append(train_discr_loss)
+        avg_train_gen_losses.append(train_gen_loss.detach())
+        avg_train_discr_losses.append(train_discr_loss.detach())
 
-        avg_valid_gen_losses.append(valid_gen_loss)
-        avg_valid_discr_losses.append(valid_discr_loss)
+        # avg_valid_gen_losses.append(valid_gen_loss.detach())
+        # avg_valid_discr_losses.append(valid_discr_loss.detach())
 
         #TODO [NICK]: Set up saving and loading of the gen and discr weights.
         save_checkpoint(
@@ -398,5 +352,7 @@ if __name__ == '__main__':
                 'state_dict_discr': discriminator.state_dict(),
             },
             is_best=False)
-        writer.flush()
-    writer.close()
+        torch.cuda.empty_cache()
+
+    #     writer.flush()
+    # writer.close()
