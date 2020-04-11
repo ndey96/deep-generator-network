@@ -57,14 +57,12 @@ def compute_loss(a,
     gen_discr = torch.flatten(discriminator(x_hat,a))  # D(G(x)) = z from notebook [batch_size,1]
 
     # stabilized sigmoid loss
-    try:
-        t_ones = torch.ones(gen_discr.size()).cuda()
-        t_zeros = torch.zeros(gen_discr.size()).cuda()
-        loss_adv = bce_logits_loss(gen_discr, t_ones)
-        loss_discr = bce_logits_loss(real_discr, t_ones + bce_logits_loss(
-            gen_discr, t_zeros))
-    except:
-        print("got here")
+    t_ones = torch.ones(gen_discr.size()).cuda()
+    t_zeros = torch.zeros(gen_discr.size()).cuda()
+    loss_adv = bce_logits_loss(gen_discr, t_ones)
+    loss_discr = bce_logits_loss(real_discr, t_ones + bce_logits_loss(
+        gen_discr, t_zeros))
+
     # Combine the losses for DeePSiM.
     loss = lambda_feat * loss_feat + lambda_adv * loss_adv + lambda_img * loss_img
 
@@ -81,71 +79,76 @@ def train(loader, optim_gen, generator, optim_discr, discriminator, encoder,
     gen_loss_sum = 0.0
     discr_loss_sum = 0.0
     num_batches = 0
-
+    ii = 0 
     for i, (inp, _) in enumerate(loader):
-         # Prime the input.
-        input_var = torch.autograd.Variable(inp)
-        input_var = input_var.to(device)
+        # print(ii)
+        ii += 1
+        if ii == ii:
+            # Prime the input.
+            input_var = torch.autograd.Variable(inp)
+            input_var = input_var.to(device)
 
-        # 1) Feed forward the data into the encoder.
-        #    ( a )    =    enc ( x )
-        features_real = encoder(input_var)
+            # 1) Feed forward the data into the encoder.
+            #    ( a )    =    enc ( x )
+            features_real = encoder(input_var)
 
-        # 2) Feed forward the data into the generator.
-        # ( x_hat )   =   gen ( a )
-        generator_out = generator(features_real)
+            # 2) Feed forward the data into the generator.
+            # ( x_hat )   =   gen ( a )
+            generator_out = generator(features_real)
 
-        # 4) Compute the loss of the generator.
-        gen_loss, discr_loss, (real_discr, gen_discr) = compute_loss(
-            a=features_real,
-            x=input_var,
-            x_hat=generator_out,
-            comparator=comparator,
-            discriminator=discriminator,
-            bce_logits_loss=bce_logits_loss)
+            # 4) Compute the loss of the generator.
+            gen_loss, discr_loss, (real_discr, gen_discr) = compute_loss(
+                a=features_real,
+                x=input_var,
+                x_hat=generator_out,
+                comparator=comparator,
+                discriminator=discriminator,
+                bce_logits_loss=bce_logits_loss)
 
-        # 5) Compute the gradient and take a step.
-        if train_generator:
-            optim_gen.zero_grad()
-            gen_loss.backward(retain_graph=True)
-            optim_gen.step()
+            # 5) Compute the gradient and take a step.
+            if train_generator:
+                optim_gen.zero_grad()
+                gen_loss.backward(retain_graph=True)
+                optim_gen.step()
 
-        if train_discrimin:
-            optim_discr.zero_grad()
-            discr_loss.backward(retain_graph=True)
-            optim_discr.step()
+            if train_discrimin:
+                optim_discr.zero_grad()
+                discr_loss.backward(retain_graph=True)
+                optim_discr.step()
 
-        # 6) Update counters.
-        with torch.no_grad():
-            gen_loss_sum += gen_loss
-            discr_loss_sum += discr_loss
-        num_batches += 1
+            # 6) Update counters.
+            with torch.no_grad():
+                gen_loss_sum += gen_loss
+                discr_loss_sum += discr_loss
+            num_batches += 1
 
-        if verbose:
-            print('[TRAIN] {:3.0f} : Gen_Loss={:0.5} -- Dis_Loss={:0.5}'.format(
-                num_batches, gen_loss, discr_loss))
-        writer.add_scalar('deep-generator-network:gen_loss', gen_loss, num_batches)
-        writer.add_scalar('deep-generator-network:discr_loss', discr_loss, num_batches)
-        writer.flush()
+            if verbose:
+                print('[TRAIN] {:3.0f} : Gen_Loss={:0.5} -- Dis_Loss={:0.5}'.format(
+                    num_batches, gen_loss, discr_loss))
+            writer.add_scalar('deep-generator-network:gen_loss', gen_loss, num_batches)
+            writer.add_scalar('deep-generator-network:discr_loss', discr_loss, num_batches)
+            writer.flush()
 
-        #
-        # 7) Switch optimizing discriminator and generator, so that neither of them overfits too much.
-        #
-        discr_loss_ratio = torch.mean((real_discr + gen_discr) / discr_loss)
+            #
+            # 7) Switch optimizing discriminator and generator, so that neither of them overfits too much.
+            #
+            discr_loss_ratio = torch.mean((real_discr + gen_discr) / discr_loss)
 
-        if discr_loss_ratio < 1e-1 and train_discrimin:
-            train_discrimin = False
+            if discr_loss_ratio < 1e-1 and train_discrimin:
+                train_discrimin = False
+                train_generator = True
+
+            if discr_loss_ratio > 5e-1 and not train_discrimin:
+                train_discrimin = True
+                train_generator = True
+
+            if discr_loss_ratio > 1e1 and train_generator:
+                train_generator = False
+                train_discrimin = True
             train_generator = True
-
-        if discr_loss_ratio > 5e-1 and not train_discrimin:
             train_discrimin = True
-            train_generator = True
-
-        if discr_loss_ratio > 1e1 and train_generator:
-            train_generator = False
-            train_discrimin = True
-        train_generator = True
-        train_discrimin = True
+        else:
+            break
     
     gen_loss_sum /= num_batches
     discr_loss_sum /= num_batches
@@ -163,55 +166,59 @@ def validate(loader, generator, discriminator, encoder, comparator, device,
     gen_loss_sum = 0.0
     discr_loss_sum = 0.0
     num_batches = 0
-
+    ii = 0 
     for i, (inp, _) in enumerate(loader):
+        # print(ii)
+        ii += 1
+        if ii == ii:
+            # target = target.cuda(async=True) # TODO [NICK]: Here too.
 
-        # target = target.cuda(async=True) # TODO [NICK]: Here too.
+            # Prime the input.
+            input_var = torch.autograd.Variable(inp)
+            input_var = input_var.to(device)
 
-        # Prime the input.
-        input_var = torch.autograd.Variable(inp)
-        input_var = input_var.to(device)
+            #
+            # 1) Feed forward the data into the encoder.
+            #
+            #    ( a )    =    enc ( x )
+            features_real = encoder(input_var)
 
-        #
-        # 1) Feed forward the data into the encoder.
-        #
-        #    ( a )    =    enc ( x )
-        features_real = encoder(input_var)
+            #
+            # 2) Feed forward the data into the generator.
+            #
+            # ( x_hat )   =   gen ( a )
+            generator_out = generator(features_real)
 
-        #
-        # 2) Feed forward the data into the generator.
-        #
-        # ( x_hat )   =   gen ( a )
-        generator_out = generator(features_real)
+            #
+            # TODO: REMOVE.
+            #
+            # 3) Encode the generated image for comparison of features.
+            #
+            # ( a_hat )    =    enc ( x_hat )
+            #features_recog = encoder(generator_out)
 
-        #
-        # TODO: REMOVE.
-        #
-        # 3) Encode the generated image for comparison of features.
-        #
-        # ( a_hat )    =    enc ( x_hat )
-        #features_recog = encoder(generator_out)
+            #
+            # 4) Compute the loss of the generator.
+            #
+            gen_loss, discr_loss, _ = compute_loss(
+                a=features_real,
+                x=input_var,
+                x_hat=generator_out,
+                comparator=comparator,
+                discriminator=discriminator,
+                bce_logits_loss=bce_logits_loss)
 
-        #
-        # 4) Compute the loss of the generator.
-        #
-        gen_loss, discr_loss, _ = compute_loss(
-            a=features_real,
-            x=input_var,
-            x_hat=generator_out,
-            comparator=comparator,
-            discriminator=discriminator)
+            #
+            # 6) Update counters.
+            #
+            with torch.no_grad():
+                gen_loss_sum += gen_loss
+                discr_loss_sum += discr_loss
+            num_batches += 1
 
-        #
-        # 6) Update counters.
-        #
-        gen_loss_sum += gen_loss
-        discr_loss_sum += discr_loss
-        num_batches += 1
-
-        if verbose:
-            print('[VALID] {:3.0f} : Gen_Loss={:0.5} -- Dis_Loss={:0.5}'.format(
-                num_batches, gen_loss, discr_loss))
+            if verbose:
+                print('[VALID] {:3.0f} : Gen_Loss={:0.5} -- Dis_Loss={:0.5}'.format(
+                    num_batches, gen_loss, discr_loss))
 
     gen_loss_sum /= num_batches
     discr_loss_sum /= num_batches
