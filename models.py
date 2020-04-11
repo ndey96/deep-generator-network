@@ -59,13 +59,13 @@ class TransposeConvGenerator(nn.Module):
         self.desired_output_size = 227
         self.fully_connected = nn.Sequential(
             nn.Linear(4096, 4096),
-            # nn.BatchNorm1d(4096),
+            nn.BatchNorm1d(4096),
             nn.LeakyReLU(negative_slope=negative_slope),  #defc7
             nn.Linear(4096, 4096),
-            # nn.BatchNorm1d(4096),
+            nn.BatchNorm1d(4096),
             nn.LeakyReLU(negative_slope=negative_slope),  #defc6
             nn.Linear(4096, 4096),
-            # nn.BatchNorm1d(4096),
+            nn.BatchNorm1d(4096),
             nn.LeakyReLU(negative_slope=negative_slope),  #defc5
         )
         self.deconv = nn.Sequential(
@@ -75,7 +75,7 @@ class TransposeConvGenerator(nn.Module):
                 kernel_size=4,
                 stride=2,
                 padding=1),  # 8x8x256
-            # nn.BatchNorm2d(256),
+            nn.BatchNorm2d(256),
             nn.LeakyReLU(negative_slope=negative_slope),  #deconv5
             nn.Conv2d(
                 in_channels=256,
@@ -83,7 +83,7 @@ class TransposeConvGenerator(nn.Module):
                 kernel_size=3,
                 stride=1,
                 padding=1),  # 8x8x512
-            # nn.BatchNorm2d(512),
+            nn.BatchNorm2d(512),
             nn.LeakyReLU(negative_slope=negative_slope),  #deconv5_1
             nn.ConvTranspose2d(
                 in_channels=512,
@@ -91,7 +91,7 @@ class TransposeConvGenerator(nn.Module):
                 kernel_size=4,
                 stride=2,
                 padding=1),  # 16x16x256
-            # nn.BatchNorm2d(256),
+            nn.BatchNorm2d(256),
             nn.LeakyReLU(negative_slope=negative_slope),  #deconv4
             nn.Conv2d(
                 in_channels=256,
@@ -99,7 +99,7 @@ class TransposeConvGenerator(nn.Module):
                 kernel_size=3,
                 stride=1,
                 padding=1),  # 16x16x256
-            # nn.BatchNorm2d(256),
+            nn.BatchNorm2d(256),
             nn.LeakyReLU(negative_slope=negative_slope),  #deconv4_1
             nn.ConvTranspose2d(
                 in_channels=256,
@@ -107,7 +107,7 @@ class TransposeConvGenerator(nn.Module):
                 kernel_size=4,
                 stride=2,
                 padding=1),  # 32x32x128
-            # nn.BatchNorm2d(128),
+            nn.BatchNorm2d(128),
             nn.LeakyReLU(negative_slope=negative_slope),  #deconv3
             nn.Conv2d(
                 in_channels=128,
@@ -115,7 +115,7 @@ class TransposeConvGenerator(nn.Module):
                 kernel_size=3,
                 stride=1,
                 padding=1),  # 32x32x128
-            # nn.BatchNorm2d(128),
+            nn.BatchNorm2d(128),
             nn.LeakyReLU(negative_slope=negative_slope),  #deconv3_1
             nn.ConvTranspose2d(
                 in_channels=128,
@@ -123,7 +123,7 @@ class TransposeConvGenerator(nn.Module):
                 kernel_size=4,
                 stride=2,
                 padding=1),  # 64x64x64
-            # nn.BatchNorm2d(64),
+            nn.BatchNorm2d(64),
             nn.LeakyReLU(negative_slope=negative_slope),  #deconv2
             nn.ConvTranspose2d(
                 in_channels=64,
@@ -131,7 +131,7 @@ class TransposeConvGenerator(nn.Module):
                 kernel_size=4,
                 stride=2,
                 padding=1),  # 128x128x32
-            # nn.BatchNorm2d(32),
+            nn.BatchNorm2d(32),
             nn.LeakyReLU(negative_slope=negative_slope),  #deconv1
             nn.ConvTranspose2d(
                 in_channels=32,
