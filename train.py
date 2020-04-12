@@ -35,6 +35,7 @@ def compute_loss(a,
                  comparator,
                  discriminator,
                  bce_logits_loss,
+                 mse_loss,
                  lambda_feat=0.01,
                  lambda_adv=0.001,
                  lambda_img=1.0):
@@ -46,11 +47,13 @@ def compute_loss(a,
     '''
 
     # Loss in feature space.
-    loss_feat = torch.sum((comparator(x_hat) - comparator(x))**2)
+    # loss_feat = torch.sum((comparator(x_hat) - comparator(x))**2)
+    loss_feat = mse_loss(comparator(x_hat), comparator(x))
 
     # Loss in image space.
     # print("torch.sum(x), torch.sum(x_hat)", torch.sum(x).item(), torch.sum(x_hat).item())
-    loss_img = torch.sum((x_hat - x)**2)
+    # loss_img = torch.sum((x_hat - x)**2)
+    loss_img = mse_loss(x_hat, x)
 
     # Adversarial losses.
     real_discr = torch.flatten(discriminator(x, a))  # D(y) [batch_size,1]
@@ -67,11 +70,11 @@ def compute_loss(a,
     # Combine the losses for DeePSiM.
     loss = lambda_feat * loss_feat + lambda_adv * loss_adv + lambda_img * loss_img
 
-    return loss, loss_discr, (real_discr, gen_discr)
+    return loss, loss_discr, (real_discr, gen_discr) , (loss_feat, loss_adv, loss_img)
 
 
 def train(loader, optim_gen, generator, optim_discr, discriminator, encoder,
-          comparator, train_generator, train_discrimin, bce_logits_loss, device,
+          comparator, train_generator, train_discrimin, bce_logits_loss, mse_loss, device,
           verbose):
 
     generator.train()
@@ -98,13 +101,14 @@ def train(loader, optim_gen, generator, optim_discr, discriminator, encoder,
             generator_out = generator(features_real)
 
             # 4) Compute the loss of the generator.
-            gen_loss, discr_loss, (real_discr, gen_discr) = compute_loss(
+            gen_loss, discr_loss, (real_discr, gen_discr), (loss_feat, loss_adv, loss_img) = compute_loss(
                 a=features_real,
                 x=input_var,
                 x_hat=generator_out,
                 comparator=comparator,
                 discriminator=discriminator,
-                bce_logits_loss=bce_logits_loss)
+                bce_logits_loss=bce_logits_loss, 
+                mse_loss = mse_loss)
 
             # 5) Compute the gradient and take a step.
             if train_generator:
@@ -126,10 +130,12 @@ def train(loader, optim_gen, generator, optim_discr, discriminator, encoder,
             if verbose:
                 print('[TRAIN] {:3.0f} : Gen_Loss={:0.5} -- Dis_Loss={:0.5}'.
                       format(num_batches, gen_loss, discr_loss))
-            writer.add_scalar('deep-generator-network:gen_loss', gen_loss,
-                              num_batches)
-            writer.add_scalar('deep-generator-network:discr_loss', discr_loss,
-                              num_batches)
+            generator.epochs = generator.epochs + generator.batch_size
+            writer.add_scalar('gen_loss', gen_loss, generator.epochs)
+            writer.add_scalar('discr_loss', discr_loss, generator.epochs)
+            writer.add_scalar('loss_feat', loss_feat, generator.epochs)
+            writer.add_scalar('loss_adv', loss_adv, generator.epochs)
+            writer.add_scalar('loss_img', loss_img, generator.epochs)
             writer.flush()
 
             #
@@ -160,7 +166,7 @@ def train(loader, optim_gen, generator, optim_discr, discriminator, encoder,
 
 
 def validate(loader, generator, discriminator, encoder, comparator, device,
-             verbose):
+                bce_logits_loss, mse_loss, verbose):
 
     # Put in evaluation mode.
     generator.eval()
@@ -203,13 +209,14 @@ def validate(loader, generator, discriminator, encoder, comparator, device,
             #
             # 4) Compute the loss of the generator.
             #
-            gen_loss, discr_loss, _ = compute_loss(
+            gen_loss, discr_loss, (real_discr, gen_discr), (loss_feat, loss_adv, loss_img) = compute_loss(
                 a=features_real,
                 x=input_var,
                 x_hat=generator_out,
                 comparator=comparator,
                 discriminator=discriminator,
-                bce_logits_loss=bce_logits_loss)
+                bce_logits_loss=bce_logits_loss,
+                mse_loss=mse_loss)
 
             #
             # 6) Update counters.
@@ -231,7 +238,7 @@ def validate(loader, generator, discriminator, encoder, comparator, device,
 
 if __name__ == '__main__':
 
-    batch_size = 64
+    batch_size = 128
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     writer = SummaryWriter()
 
@@ -268,12 +275,12 @@ if __name__ == '__main__':
     comparator.eval()
 
     generator = TransposeConvGenerator().cuda()
+    generator.batch_size = batch_size
 
     discriminator = Discriminator().cuda()
-    try:
-        bce_logits_loss = nn.BCEWithLogitsLoss(reduction='sum').cuda()
-    except:
-        print("hey")
+
+    bce_logits_loss = nn.BCEWithLogitsLoss(reduction='sum').cuda()
+    mse_loss = nn.MSELoss().cuda()
 
     # Set up the optimizers.
     optim_gen = torch.optim.SGD(
@@ -308,6 +315,7 @@ if __name__ == '__main__':
             train_generator=train_generator,
             train_discrimin=train_discrimin,
             bce_logits_loss=bce_logits_loss,
+            mse_loss = mse_loss,
             device=device,
             verbose=verbose)
 
@@ -318,17 +326,20 @@ if __name__ == '__main__':
             encoder=encoder,
             comparator=comparator,
             device=device,
-            verbose=verbose)
+            bce_logits_loss=bce_logits_loss,
+            mse_loss = mse_loss,
+            verbose=verbose
+            )
 
         #TODO [NICK]: Set up torchvision/tensorboard to visualize these lists??
         writer.add_scalar('deep-generator-network:avg_train_gen_losses',
-                          train_gen_loss.detach(), epoch)
+                          train_gen_loss.detach(), generator.epochs)
         writer.add_scalar('deep-generator-network:avg_train_discr_losses',
-                          train_discr_loss.detach(), epoch)
+                          train_discr_loss.detach(), generator.epochs)
         writer.add_scalar('deep-generator-network:avg_validation_gen_losses',
-                          valid_gen_loss.detach(), epoch)
+                          valid_gen_loss.detach(), generator.epochs)
         writer.add_scalar('deep-generator-network:avg_validation_discr_losses',
-                          valid_discr_loss.detach(), epoch)
+                          valid_discr_loss.detach(), generator.epochs)
         writer.flush()
         epoch += 1
 
@@ -340,7 +351,4 @@ if __name__ == '__main__':
                 'state_dict_discr': discriminator.state_dict(),
             },
             is_best=False)
-        torch.cuda.empty_cache()
-
-        writer.flush()
     writer.close()

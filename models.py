@@ -55,6 +55,8 @@ class TransposeConvGenerator(nn.Module):
         super(TransposeConvGenerator, self).__init__()
         # https://github.com/shijx12/DeepSim/blob/master/deepSimGAN/deepSimNet.py
         negative_slope = 0.3
+        self.epochs = 0 
+        self.batch_size = 128
         self.deconv_output_size = 256
         self.desired_output_size = 227
         self.fully_connected = nn.Sequential(
