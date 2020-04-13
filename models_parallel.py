@@ -304,7 +304,6 @@ class Discriminator(nn.Module):
         # print("x", x.size())
         x = self.fc(x)  # 1
         # print("x", x.size())
-
         return x
 
 
