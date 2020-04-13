@@ -9,17 +9,13 @@ class AlexNetComparator(nn.Module):
     def __init__(self):
         super(AlexNetComparator, self).__init__()
         original_model = alexnet(pretrained=True)
-        self.features = torch.nn.DataParallel(original_model.features)
+        self.features = original_model.features
         self.avgpool = original_model.avgpool
 
     def forward(self, x):
-        # print("00AlexNetComparator", x.size())
         x = self.features(x)
-        # print("01AlexNetComparator", x.size())
         x = self.avgpool(x)
-        # print("02AlexNetComparator", x.size())
         x = torch.flatten(x, 1)
-        # print("03AlexNetComparator", x.size())
         return x
 
 
@@ -30,22 +26,15 @@ class AlexNetEncoder(nn.Module):
         original_model = alexnet(pretrained=True)
         self.deconv_output_size = 256
         self.desired_output_size = 227
-        self.features = torch.nn.DataParallel(original_model.features)
+        self.features = original_model.features
         self.avgpool = original_model.avgpool
-        # could be to six.
         self.classifier = original_model.classifier[:5]
 
-
     def forward(self, x):
-        # print("00AlexNetEncoder", x.size())
         x = self.features(x)
-        # print("01AlexNetEncoder", x.size())
         x = self.avgpool(x)
-        # print("02AlexNetEncoder", x.size())
         x = torch.flatten(x, 1)
-        # print("03AlexNetEncoder", x.size())
         x = self.classifier(x)
-        # print("04AlexNetEncoder", x.size())
         return x
 
 
@@ -303,17 +292,42 @@ class Discriminator(nn.Module):
         )
 
     def forward(self, image, features):
-        print("image", image.size())
-        print("features", features.size())
+        # print("image", image.size())
+        # print("features", features.size())
         x1 = self.conv(image)  # 1x1x256
-        print("x1", x1.size())
+        # print("x1", x1.size())
         x1 = torch.flatten(x1, 1)  # 256
-        print("x1", x1.size())
+        # print("x1", x1.size())
         x2 = self.features_fc(features)  # 512
-        print("x2", x2.size())
+        # print("x2", x2.size())
         x = torch.cat((x1, x2), dim=1)  # 768
-        print("x", x.size())
+        # print("x", x.size())
         x = self.fc(x)  # 1
-        print("x", x.size())
+        # print("x", x.size())
 
         return x
+
+
+class DeepSim(nn.Module):
+
+    def __init__(self):
+        super(DeepSim, self).__init__()
+        self.batch_size = 128
+        self.E = AlexNetEncoder()
+        self.G = TransposeConvGenerator()
+        self.C = AlexNetComparator()
+        self.D = Discriminator()
+        self.t_ones = torch.ones([self.batch_size])
+        self.t_zeros = torch.zeros([self.batch_size])
+        self.bce_logits_loss = nn.BCEWithLogitsLoss(reduction='sum')
+        self.mse_loss = nn.MSELoss()
+
+    def forward(self, y):
+        x = self.E(y)
+        gx = self.G(x)
+        egx = self.E(gx)
+        cgx = self.C(gx)
+        cy = self.C(y)
+        dgx = self.D(gx, egx)
+        dy = self.D(y, x)
+        return y, x, gx, egx, cgx, cy, dgx, dy

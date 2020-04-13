@@ -2,7 +2,7 @@ from torch import nn
 import torch
 from torchvision.models import alexnet
 from utils import center_crop
-from utils import View, ds_flatten
+from utils import View, View2, ds_flatten
 
 
 class DeepSim(nn.Module):
@@ -21,6 +21,9 @@ class DeepSim(nn.Module):
         self.e_features = e.features
         self.e_avgpool = e.avgpool
         self.e_classifier = e.classifier[:5]
+        self.bce_logits_loss = nn.BCEWithLogitsLoss(reduction='sum')
+        self.mse_loss = nn.MSELoss()
+
 
         # generator
         self.G = nn.Sequential(
@@ -147,7 +150,7 @@ class DeepSim(nn.Module):
                 stride=2,
                 padding=0),  # 12x12x256
             nn.AvgPool2d(kernel_size=12, stride=12),  # 1x1x256
-            ds_flatten()
+            View2(128, 256)
         )
         self.d_02 = nn.Sequential(
             nn.Linear(4096, 1024),
@@ -193,12 +196,33 @@ class DeepSim(nn.Module):
 
         # image = y, enc(image) = x
         # image = gx, enc(image) = egx
+        print("y", y.size())
+        print("gx", gx.size())
         h0y = self.d_00(y)
         h0gx = self.d_00(gx)
+        print("h0y", h0y.size())
+        print("h0gx", h0gx.size())
+        
+        print("x", x.size())
+        print("egx", egx.size())
         h1y = self.d_02(x)
         h1gx = self.d_02(egx)
+        print("h1y", h1y.size())
+        print("h1gx", h1gx.size())
         dy = torch.cat((h0y, h1y), dim=1)
         dgx = torch.cat((h0gx, h1gx), dim=1)
+        dy = self.d_03(dy)
+        dgx = self.d_03(ggx)
         
         return y, x, gxc, gxd, cgx, cy, dgx, dy
 
+# image torch.Size([128, 3, 227, 227])
+# features torch.Size([128, 4096])
+# x1 torch.Size([128, 256, 1, 1])
+# x1 torch.Size([128, 256])
+# x2 torch.Size([128, 512])
+# x torch.Size([128, 768])
+# x torch.Size([128, 1])
+    
+# inp - xx <class 'torch.Tensor'> torch.Size([128, 3, 227, 227])
+# input_var xxx <class 'torch.Tensor'> torch.Size([128, 3, 227, 227])

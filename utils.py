@@ -14,6 +14,7 @@ class ds_flatten(nn.Module):
     def forward(self, x):
         return x.view(-1) 
 
+
 class View(nn.Module):
     def __init__(self, a, b, c, d):
         super(View, self).__init__()
@@ -26,3 +27,11 @@ class View(nn.Module):
         return x.view((self.a, self.b, self.c, self.d)) 
 
 
+class View2(nn.Module):
+    def __init__(self, a, b):
+        super(View, self).__init__()
+        self.a = a
+        self.b = b
+   
+    def forward(self, x):
+        return x.view((self.a, self.b)) 
