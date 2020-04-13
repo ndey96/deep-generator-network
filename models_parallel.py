@@ -316,10 +316,10 @@ class DeepSim(nn.Module):
         self.G = TransposeConvGenerator()
         self.C = AlexNetComparator()
         self.D = Discriminator()
-        self.t_ones = torch.ones([self.batch_size])
-        self.t_zeros = torch.zeros([self.batch_size])
-        self.bce_logits_loss = nn.BCEWithLogitsLoss(reduction='sum')
-        self.mse_loss = nn.MSELoss()
+        # self.t_ones = torch.ones([self.batch_size])
+        # self.t_zeros = torch.zeros([self.batch_size])
+        # self.bce_logits_loss = nn.BCEWithLogitsLoss(reduction='sum')
+        # self.mse_loss = nn.MSELoss()
 
     def forward(self, y):
         x = self.E(y)
