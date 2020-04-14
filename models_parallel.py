@@ -325,3 +325,30 @@ class DeepSim(nn.Module):
         dgx = self.D(gx, egx)
         dy = self.D(y, x)
         return y, x, gx, egx, cgx, cy, dgx, dy
+
+
+class DeepGen(nn.Module):
+
+    def __init__(self):
+        super(DeepGen, self).__init__()
+        self.batch_size = 128
+        self.E = AlexNetEncoder()
+        for param in self.E.parameters():
+            param.require_grad = False
+        self.E.eval()
+        self.G = UpsampleConvGenerator()
+        self.C = AlexNetComparator()
+        for param in self.C.parameters():
+            param.require_grad = False
+        self.C.eval()
+        self.D = Discriminator()
+
+    def forward(self, y):
+        x = self.E(y)
+        gx = self.G(x)
+        egx = self.E(gx)
+        cgx = self.C(gx)
+        cy = self.C(y)
+        dgx = self.D(gx, egx)
+        dy = self.D(y, x)
+        return y, x, gx, egx, cgx, cy, dgx, dy
