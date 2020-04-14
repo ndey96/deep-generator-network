@@ -1,14 +1,16 @@
-import data_stub
-import optimizer_stub
-import loss_stub
 import numpy as np
 import time
 import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
-import models_parallel
 import torchvision
+
+from data_stub import get_data_tools
+from loss_stub import compute_loss
+from models_parallel import DeepSim
+from optimizer_stub import get_optimizers
+
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
@@ -21,7 +23,7 @@ epochs = 100
 
 # CUDA - need to tweak this to run on a CPU. 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-DS = models_parallel.DeepSim()
+DS = DeepSim()
 if torch.cuda.device_count() > 1:
   print("Let's use", torch.cuda.device_count(), "GPUs!")
   DS = nn.DataParallel(DS)
@@ -29,7 +31,7 @@ DS.to(device)
 DS.module.batch_size = batch_size
 
 # DataLoaders
-imagenet_transforms, train_loader, val_loader = data_stub.get_data_tools(batch_size)
+imagenet_transforms, train_loader, val_loader = get_data_tools(batch_size)
 
 # Google, you're not evil... are you?
 writer = SummaryWriter()
@@ -37,17 +39,20 @@ writer = SummaryWriter()
 # writer.add_graph(DS, dummy_input)
 
 # Set up the optimizers.
-optim_gen, optim_discr = optimizer_stub.get_optimizers(DS)
-bce = nn.BCEWithLogitsLoss(reduction='sum').to(device)
-mse = nn.MSELoss().to(device)
+optim_gen, optim_discr = get_optimizers(DS)
+bce = nn.BCEWithLogitsLoss(reduction='mean').to(device)
+mse = nn.MSELoss(reduction='mean').to(device)
 t_ones = torch.ones([batch_size]).to(device)
 t_zeros = torch.zeros([batch_size]).to(device)
+
 train_generator = True
 train_discrimin = True
 
 verbose = True
+
 training_batches = 0 
 validation_batches = 0 
+
 for i in range(epochs):
     DS.module.G.train()
     DS.module.D.train()
@@ -60,12 +65,20 @@ for i in range(epochs):
         # forward pass, passes...
         y, x, gx, egx, cgx, cy, dgx, dy = DS(input_var)
 
-        # calculate loss terms
+        # calculate loss terms - if dgx.size()[0] != batch_size - does it
+        # mean we are at the end of the dataset and the last batch is not 
+        # full sized?  At any rate, whenever this condition isn't met 
+        # the forward pass dies, and sometime at the end of an epoch, 
+        # its not met. Maybe if there are bad imagenet files selected
+        # in the batch, the data_loader just forges ahead and passes
+        # a batch with less channnels?  Torch utilities are evil. 
         if dgx.size()[0] == batch_size:
             training_batches += 1
             loss_feat, loss_img, loss_adv, loss_discr, loss_gen = \
-                loss_stub.compute_loss(y, x, gx, egx, cgx, cy, dgx, dy, t_ones, t_zeros, bce, mse, lambda_feat, lambda_adv, lambda_img)
-
+                compute_loss(y, x, gx, egx, cgx, cy, dgx, dy, t_ones, 
+                    t_zeros, bce, mse, lambda_feat, lambda_adv,
+                    lambda_img)
+            
             # apply backprop on the optimizers
             if train_generator:
                 optim_gen.zero_grad()
@@ -83,29 +96,36 @@ for i in range(epochs):
             if loss_discr_ratio < 1e-1 and train_discrimin:
                 train_discrimin = False
                 train_generator = True
+                print("case1")
 
             if loss_discr_ratio > 5e-1 and not train_discrimin:
                 train_discrimin = True
                 train_generator = True
+                print("case2")
 
             if loss_discr_ratio > 1e1 and train_generator:
                 train_generator = False
                 train_discrimin = True
+                print("case3")
+
             train_generator = True
             train_discrimin = True
 
             # book-keeping and reporting
             n = training_batches * batch_size
-            writer.add_scalar('train/loss_gen', loss_gen, n )
-            writer.add_scalar('train/loss_discr', loss_discr, n)
-            writer.add_scalar('train/loss_feat', loss_feat, n)
-            writer.add_scalar('train/loss_adv', loss_adv, n)
-            writer.add_scalar('train/loss_img', loss_img, n)
+            writer.add_scalar('train/loss_gen', loss_gen.detach(), n )
+            writer.add_scalar('train/loss_discr', loss_discr.detach(), n)
+            writer.add_scalar('train/loss_feat', loss_feat.detach(), n)
+            writer.add_scalar('train/loss_adv', loss_adv.detach(), n)
+            writer.add_scalar('train/loss_img', loss_img.detach(), n)
             if verbose:
                 print('[TRAIN] {:3.0f} : Gen_Loss={:0.5} -- Dis_Loss={:0.5}'.
                         format(n, loss_gen, loss_discr))
-            del y; del x;del gx;del egx;del cgx;del cy;del dgx;del dy
-            del loss_feat;del loss_img;del loss_adv;del loss_discr;del loss_gen
+
+            # In the hopes of isolating/mitigating what we think are possible
+            # memory leaks. 
+            del y; del x; del gx; del egx; del cgx; del cy; del dgx; del dy
+            del loss_feat; del loss_img; del loss_adv; del loss_discr; del loss_gen
 
     writer.add_scalar('train/training_performance', training_batches * batch_size , time.time())
     grid_images = torch.cat((input_var[:5], gx[:5]))
@@ -126,13 +146,13 @@ for i in range(epochs):
         if dgx.size()[0] == batch_size:
             validation_batches += 1
             loss_feat, loss_img, loss_adv, loss_discr, loss_gen = \
-                loss_stub.compute_loss(y, x, gx, egx, cgx, cy, dgx, dy, t_ones, t_zeros, bce, mse, lambda_feat, lambda_adv, lambda_img)
+                compute_loss(y, x, gx, egx, cgx, cy, dgx, dy, t_ones, t_zeros, bce, mse, lambda_feat, lambda_adv, lambda_img)
             nv = validation_batches * batch_size
-            writer.add_scalar('val/loss_gen', loss_gen, nv)
-            writer.add_scalar('val/loss_discr', loss_discr, nv)
-            writer.add_scalar('val/loss_feat', loss_feat, nv)
-            writer.add_scalar('val/loss_adv', loss_adv, nv)
-            writer.add_scalar('val/loss_img', loss_img, nv)
+            writer.add_scalar('val/loss_gen', loss_gen.detach(), nv)
+            writer.add_scalar('val/loss_discr', loss_discr.detach(), nv)
+            writer.add_scalar('val/loss_feat', loss_feat.detach(), nv)
+            writer.add_scalar('val/loss_adv', loss_adv.detach(), nv)
+            writer.add_scalar('val/loss_img', loss_img.detach(), nv)
             if verbose:
                 print('[VALID] {:3.0f} : Gen_Loss={:0.5} -- Dis_Loss={:0.5}'.
                         format(nv, loss_gen, loss_discr))

@@ -292,18 +292,11 @@ class Discriminator(nn.Module):
         )
 
     def forward(self, image, features):
-        # print("image", image.size())
-        # print("features", features.size())
         x1 = self.conv(image)  # 1x1x256
-        # print("x1", x1.size())
         x1 = torch.flatten(x1, 1)  # 256
-        # print("x1", x1.size())
         x2 = self.features_fc(features)  # 512
-        # print("x2", x2.size())
         x = torch.cat((x1, x2), dim=1)  # 768
-        # print("x", x.size())
         x = self.fc(x)  # 1
-        # print("x", x.size())
         return x
 
 
@@ -313,15 +306,15 @@ class DeepSim(nn.Module):
         super(DeepSim, self).__init__()
         self.batch_size = 128
         self.E = AlexNetEncoder()
+        for param in self.E.parameters():
+            param.require_grad = False
         self.E.eval()
         self.G = TransposeConvGenerator()
         self.C = AlexNetComparator()
+        for param in self.C.parameters():
+            param.require_grad = False
         self.C.eval()
         self.D = Discriminator()
-        # self.t_ones = torch.ones([self.batch_size])
-        # self.t_zeros = torch.zeros([self.batch_size])
-        # self.bce_logits_loss = nn.BCEWithLogitsLoss(reduction='sum')
-        # self.mse_loss = nn.MSELoss()
 
     def forward(self, y):
         x = self.E(y)
