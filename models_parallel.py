@@ -313,8 +313,10 @@ class DeepSim(nn.Module):
         super(DeepSim, self).__init__()
         self.batch_size = 128
         self.E = AlexNetEncoder()
+        self.E.eval()
         self.G = TransposeConvGenerator()
         self.C = AlexNetComparator()
+        self.C.eval()
         self.D = Discriminator()
         # self.t_ones = torch.ones([self.batch_size])
         # self.t_zeros = torch.zeros([self.batch_size])

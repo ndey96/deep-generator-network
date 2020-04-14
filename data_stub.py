@@ -10,20 +10,25 @@ def get_data_tools(batch_size):
         transforms.Normalize(
             mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
-
-    train_loader = torch.utils.data.DataLoader(
-        datasets.ImageFolder(
+    ds = datasets.ImageFolder(
             '/home/torenvln/git/fastdata2/ilsvrc2012/training_images',
-            imagenet_transforms),
+            imagenet_transforms)
+    # tlist = list(range(0, len(ds), 300))
+    # ds = torch.utils.data.Subset(ds, tlist)
+    train_loader = torch.utils.data.DataLoader(
+        ds,
         batch_size=batch_size,
         shuffle=True,
         num_workers=8,
         pin_memory=True)
 
-    val_loader = torch.utils.data.DataLoader(
-        datasets.ImageFolder(
+    ds2 = datasets.ImageFolder(
             '/home/torenvln/git/fastdata2/ilsvrc2012/validation_images',
-            imagenet_transforms),
+            imagenet_transforms)
+    # vlist = list(range(0, len(ds), 10))
+    # ds2 = torch.utils.data.Subset(ds, vlist)
+    val_loader = torch.utils.data.DataLoader(
+        ds2,
         batch_size=batch_size,
         shuffle=False,
         num_workers=8,
