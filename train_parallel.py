@@ -6,10 +6,12 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision
 
+from checkpoint_stub import save_deepsim, load_deepsim
 from data_stub import get_data_tools
 from loss_stub import compute_loss
 from models_parallel import DeepSim
 from optimizer_stub import get_optimizers
+
 
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.tensorboard import SummaryWriter
