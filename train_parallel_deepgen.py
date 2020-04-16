@@ -40,7 +40,7 @@ optim_gen, optim_discr = get_optimizers(DS)
 # Load checkpoint
 load_model = False
 if load_model == True:
-    path = "./chk/14_04_2020-09-56-50_330_128.ptm"
+    path = "./chk/14_04_2020-19-57-23_40036_128.ptm"
     DS, optim_gen, optim_discr, epoch, training_batches, lambda_feat,\
         lambda_adv, lambda_img, batch_size = load_checkpoint(DS, optim_gen, optim_discr, filename=path)
 

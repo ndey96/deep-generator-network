@@ -226,6 +226,7 @@ class UpsampleConvGenerator(nn.Module):
                 kernel_size=3,
                 stride=1,
                 padding=1),  # 256x256x3
+            nn.Tanh()
         )
 
     def forward(self, x):
