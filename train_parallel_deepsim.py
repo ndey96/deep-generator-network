@@ -42,10 +42,10 @@ DS.module.batch_size = batch_size
 optim_gen, optim_discr = get_optimizers(DS, lr)
 
 # Load checkpoint
-load_model = False
+load_model = True
 if load_model == True:
-    path = "./chk/14_04_2020-09-56-50_330_128.ptm"
-    DS, optim_gen, optim_discr, epoch, training_batches, lambda_feat, lambda_adv, lambda_img, batch_size, lr = load_checkpoint(DS, optim_gen, optim_discr, filename=path)
+    path2 = "./chk/17_04_2020-18-06-25_5004_256_lf0.01_la100_li2e-06_lr0.0002.ptm"
+    DS, optim_gen, optim_discr, epoch, training_batches, lambda_feat, lambda_adv, lambda_img, batch_size, lr = load_checkpoint(DS, optim_gen, optim_discr, filename=path2)
 
 # Some required math
 bce = nn.BCEWithLogitsLoss(reduction='mean').to(device)
