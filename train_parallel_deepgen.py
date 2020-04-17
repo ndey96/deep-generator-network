@@ -32,6 +32,7 @@ lambda_adv= 1
 lambda_img= 0.01
 batch_size = 128
 epochs = 100
+lr = 0.0002
 training_batches = 0
 path = "./chk/"
 
@@ -47,11 +48,11 @@ DS.module.batch_size = batch_size
 optim_gen, optim_discr = get_optimizers(DS, lr)
 
 # Load checkpoint
-load_model = False
+load_model = True
 if load_model == True:
     # changed lr to 
     # path2 = "./chk/pre_hp_change/7_04_2020-09-02-41_120105_160.ptm"
-    path2 = "./chk/pre_hp_change/7_04_2020-09-02-41_120105_160.ptm"
+    path2 = "./chk/17_04_2020-18-40-21_10009_128_lf0.01_la1_li0.01_lr0.0002.ptm"
     DS, optim_gen, optim_discr, epoch, training_batches, lambda_feat, lambda_adv, lambda_img, batch_size, lr = load_checkpoint(DS, optim_gen, optim_discr, filename=path2)
 
 # Some required math
@@ -157,7 +158,7 @@ for i in range(epochs):
             del loss_feat; del loss_img; del loss_adv; del loss_discr; del loss_gen
 
     # Save a checkpoint
-    save_checkpoint(path, DS, optim_gen, optim_discr, training_batches, lambda_feat, lambda_adv, lambda_img, batch_size, i, lr)
+    save_checkpoint("dg", path, DS, optim_gen, optim_discr, training_batches, lambda_feat, lambda_adv, lambda_img, batch_size, i, lr)
 
     grid_images = torch.cat((input_var[:5], gx[:5]))
     grid00 = torchvision.utils.make_grid(grid_images, nrow=5, normalize=True)
