@@ -225,6 +225,7 @@ class UpsampleConvGenerator(nn.Module):
                 kernel_size=3,
                 stride=1,
                 padding=1),  # 256x256x3
+            nn.Tanh()
         )
 
     def forward(self, x):
@@ -291,18 +292,11 @@ class Discriminator(nn.Module):
         )
 
     def forward(self, image, features):
-        # print("image", image.size())
-        # print("features", features.size())
         x1 = self.conv(image)  # 1x1x256
-        # print("x1", x1.size())
         x1 = torch.flatten(x1, 1)  # 256
-        # print("x1", x1.size())
         x2 = self.features_fc(features)  # 512
-        # print("x2", x2.size())
         x = torch.cat((x1, x2), dim=1)  # 768
-        # print("x", x.size())
         x = self.fc(x)  # 1
-        # print("x", x.size())
         return x
 
 
@@ -312,15 +306,15 @@ class DeepSim(nn.Module):
         super(DeepSim, self).__init__()
         self.batch_size = 128
         self.E = AlexNetEncoder()
+        for param in self.E.parameters():
+            param.require_grad = False
         self.E.eval()
         self.G = TransposeConvGenerator()
         self.C = AlexNetComparator()
+        for param in self.C.parameters():
+            param.require_grad = False
         self.C.eval()
         self.D = Discriminator()
-        # self.t_ones = torch.ones([self.batch_size])
-        # self.t_zeros = torch.zeros([self.batch_size])
-        # self.bce_logits_loss = nn.BCEWithLogitsLoss(reduction='sum')
-        # self.mse_loss = nn.MSELoss()
 
     def forward(self, y):
         x = self.E(y)
@@ -330,4 +324,31 @@ class DeepSim(nn.Module):
         cy = self.C(y)
         dgx = self.D(gx, cgx)
         dy = self.D(y, cx)
+        return y, x, gx, egx, cgx, cy, dgx, dy
+
+
+class DeepGen(nn.Module):
+
+    def __init__(self):
+        super(DeepGen, self).__init__()
+        self.batch_size = 128
+        self.E = AlexNetEncoder()
+        for param in self.E.parameters():
+            param.require_grad = False
+        self.E.eval()
+        self.G = UpsampleConvGenerator()
+        self.C = AlexNetComparator()
+        for param in self.C.parameters():
+            param.require_grad = False
+        self.C.eval()
+        self.D = Discriminator()
+
+    def forward(self, y):
+        x = self.E(y)
+        gx = self.G(x)
+        egx = self.E(gx)
+        cgx = self.C(gx)
+        cy = self.C(y)
+        dgx = self.D(gx, egx)
+        dy = self.D(y, x)
         return y, x, gx, egx, cgx, cy, dgx, dy

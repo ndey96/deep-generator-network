@@ -9,9 +9,8 @@ import torchvision
 from checkpoint_stub import save_checkpoint, load_checkpoint
 from data_stub import get_data_tools
 from loss_stub import compute_loss
-from models_parallel import DeepSim
+from models_parallel import DeepGen
 from optimizer_stub import get_optimizers
-
 
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.tensorboard import SummaryWriter
@@ -19,15 +18,16 @@ from torch.utils.tensorboard import SummaryWriter
 # Parameters
 lambda_feat=0.01
 lambda_adv=0.001
-lambda_img=1.0
-batch_size = 256
+# pre hyper parameter change 
+# lambda_img=1.0
+lambda_img= 0.0
+batch_size = 160
 epochs = 100
 training_batches = 0
 path = "./chk/"
 
-
 # CUDA - need to tweak this to run on a CPU.
-DS = DeepSim() 
+DS = DeepGen() 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 if torch.cuda.device_count() > 1:
   print("Let's use", torch.cuda.device_count(), "GPUs!")
@@ -40,9 +40,11 @@ optim_gen, optim_discr = get_optimizers(DS)
 # Load checkpoint
 load_model = False
 if load_model == True:
-    path = "./chk/14_04_2020-09-56-50_330_128.ptm"
+    # changed lr to 
+    # path2 = "./chk/pre_hp_change/7_04_2020-09-02-41_120105_160.ptm"
+    path2 = "./chk/pre_hp_change/7_04_2020-09-02-41_120105_160.ptm"
     DS, optim_gen, optim_discr, epoch, training_batches, lambda_feat,\
-        lambda_adv, lambda_img, batch_size = load_checkpoint(DS, optim_gen, optim_discr, filename=path)
+        lambda_adv, lambda_img, batch_size = load_checkpoint(DS, optim_gen, optim_discr, filename=path2)
 
 # Some required math
 bce = nn.BCEWithLogitsLoss(reduction='mean').to(device)
@@ -57,7 +59,6 @@ imagenet_transforms, train_loader, val_loader = get_data_tools(batch_size)
 writer = SummaryWriter()
 # dummy_input = torch.rand(1, 3, 227, 227)
 # writer.add_graph(DS, dummy_input)
-
 
 train_generator = True
 train_discrimin = True
@@ -126,14 +127,14 @@ for i in range(epochs):
             
             # book-keeping and reporting
             n = training_batches * batch_size
-            writer.add_scalar('train/loss_gen', loss_gen.detach(), n )
-            writer.add_scalar('train/loss_discr', loss_discr.detach(), n)
-            writer.add_scalar('train/loss_feat', loss_feat.detach(), n)
-            writer.add_scalar('train/loss_adv', loss_adv.detach(), n)
-            writer.add_scalar('train/loss_img', loss_img.detach(), n)
+            writer.add_scalar('train/dg_loss_gen', loss_gen.detach(), n )
+            writer.add_scalar('train/dg_loss_discr', loss_discr.detach(), n)
+            writer.add_scalar('train/dg_loss_feat', loss_feat.detach(), n)
+            writer.add_scalar('train/dg_loss_adv', loss_adv.detach(), n)
+            writer.add_scalar('train/dg_loss_img', loss_img.detach(), n)
             if verbose:
                 print('[TRAIN] {:3.0f} : Gen_Loss={:0.5} -- Dis_Loss={:0.5}'.
-                        format(n, loss_gen, loss_discr))
+                        format(n, loss_gen.detach(), loss_discr.detach()))
 
             # In the hopes of isolating/mitigating what we think are possible
             # memory leaks. 
@@ -145,7 +146,7 @@ for i in range(epochs):
 
     grid_images = torch.cat((input_var[:5], gx[:5]))
     grid00 = torchvision.utils.make_grid(grid_images, nrow=5, normalize=True)
-    writer.add_image("train/images " + str(i), grid00, i)
+    writer.add_image("train/dg_images " + str(i), grid00, i)
     del grid_images; del grid00
 
     # Do some validation. 
@@ -163,11 +164,11 @@ for i in range(epochs):
             loss_feat, loss_img, loss_adv, loss_discr, loss_gen = \
                 compute_loss(y, x, gx, egx, cgx, cy, dgx, dy, t_ones, t_zeros, bce, mse, lambda_feat, lambda_adv, lambda_img)
             nv = validation_batches * batch_size
-            writer.add_scalar('val/loss_gen', loss_gen.detach(), nv)
-            writer.add_scalar('val/loss_discr', loss_discr.detach(), nv)
-            writer.add_scalar('val/loss_feat', loss_feat.detach(), nv)
-            writer.add_scalar('val/loss_adv', loss_adv.detach(), nv)
-            writer.add_scalar('val/loss_img', loss_img.detach(), nv)
+            writer.add_scalar('val/dg_loss_gen', loss_gen.detach(), nv)
+            writer.add_scalar('val/dg_loss_discr', loss_discr.detach(), nv)
+            writer.add_scalar('val/dg_loss_feat', loss_feat.detach(), nv)
+            writer.add_scalar('val/dg_loss_adv', loss_adv.detach(), nv)
+            writer.add_scalar('val/dg_loss_img', loss_img.detach(), nv)
             if verbose:
                 print('[VALID] {:3.0f} : Gen_Loss={:0.5} -- Dis_Loss={:0.5}'.
                         format(nv, loss_gen, loss_discr))
@@ -175,7 +176,7 @@ for i in range(epochs):
             del loss_feat;del loss_img;del loss_adv;del loss_discr;del loss_gen
     grid_images = torch.cat((input_var[:5], gx[:5]))
     grid00 = torchvision.utils.make_grid(grid_images, nrow=5, normalize=True)
-    writer.add_image('val/images ' + str(i), grid00, i)
+    writer.add_image('val/dg_images ' + str(i), grid00, i)
     del grid_images;del grid00
 
 # Google, where did you go wrong???
