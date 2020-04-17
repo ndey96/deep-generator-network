@@ -129,11 +129,18 @@ for i in range(epochs):
             
             # book-keeping and reporting
             n = training_batches * batch_size
-            writer.add_scalar('train/loss_gen', loss_gen.detach(), n )
-            writer.add_scalar('train/loss_discr', loss_discr.detach(), n)
-            writer.add_scalar('train/loss_feat', loss_feat.detach(), n)
-            writer.add_scalar('train/loss_adv', loss_adv.detach(), n)
-            writer.add_scalar('train/loss_img', loss_img.detach(), n)
+            lf = lambda_feat * loss_feat.detach()
+            la = lambda_adv * loss_adv.detach()
+            li = lambda_img * loss_img.detach()
+            tl = lf + la + li
+
+            writer.add_scalar('train/ds_loss_gen', loss_gen.detach(), n )
+            writer.add_scalar('train/ds_loss_discr', loss_discr.detach(), n)
+            writer.add_scalar('train/ds_loss_feat', lf, n)
+            writer.add_scalar('train/ds_loss_adv', la, n)
+            writer.add_scalar('train/ds_loss_img', li, n)
+            writer.add_scalar('train/ds_loss_total', tl, n)
+
             if verbose:
                 print('[TRAIN] {:3.0f} : Gen_Loss={:0.5} -- Dis_Loss={:0.5}'.
                         format(n, loss_gen, loss_discr))
@@ -166,11 +173,21 @@ for i in range(epochs):
             loss_feat, loss_img, loss_adv, loss_discr, loss_gen = \
                 compute_loss(y, x, gx, egx, cgx, cy, dgx, dy, t_ones, t_zeros, bce, mse, lambda_feat, lambda_adv, lambda_img)
             nv = validation_batches * batch_size
-            writer.add_scalar('val/loss_gen', loss_gen.detach(), nv)
-            writer.add_scalar('val/loss_discr', loss_discr.detach(), nv)
-            writer.add_scalar('val/loss_feat', loss_feat.detach(), nv)
-            writer.add_scalar('val/loss_adv', loss_adv.detach(), nv)
-            writer.add_scalar('val/loss_img', loss_img.detach(), nv)
+
+            # book-keeping and reporting
+            n = training_batches * batch_size
+            lf = lambda_feat * loss_feat.detach()
+            la = lambda_adv * loss_adv.detach()
+            li = lambda_img * loss_img.detach()
+            tl = lf + la + li
+
+            writer.add_scalar('val/ds_loss_gen', loss_gen.detach(), n )
+            writer.add_scalar('val/ds_loss_discr', loss_discr.detach(), n)
+            writer.add_scalar('val/ds_loss_feat', lf, n)
+            writer.add_scalar('val/ds_loss_adv', la, n)
+            writer.add_scalar('val/ds_loss_img', li, n)
+            writer.add_scalar('val/ds_loss_total', tl, n)
+
             if verbose:
                 print('[VALID] {:3.0f} : Gen_Loss={:0.5} -- Dis_Loss={:0.5}'.
                         format(nv, loss_gen, loss_discr))
