@@ -151,7 +151,7 @@ for i in range(epochs):
             del loss_feat; del loss_img; del loss_adv; del loss_discr; del loss_gen
 
     # Save a checkpoint
-    save_checkpoint(path, DS, optim_gen, optim_discr, training_batches, lambda_feat, lambda_adv, lambda_img, batch_size, i, lr)
+    save_checkpoint("ds", path, DS, optim_gen, optim_discr, training_batches, lambda_feat, lambda_adv, lambda_img, batch_size, i, lr)
 
     grid_images = torch.cat((input_var[:5], gx[:5]))
     grid00 = torchvision.utils.make_grid(grid_images, nrow=5, normalize=True)
