@@ -52,8 +52,7 @@ if load_model == True:
     # changed lr to 
     # path2 = "./chk/pre_hp_change/7_04_2020-09-02-41_120105_160.ptm"
     path2 = "./chk/pre_hp_change/7_04_2020-09-02-41_120105_160.ptm"
-    DS, optim_gen, optim_discr, epoch, training_batches, lambda_feat,\
-        lambda_adv, lambda_img, batch_size, lr = load_checkpoint(DS, optim_gen, optim_discr, filename=path2)
+    DS, optim_gen, optim_discr, epoch, training_batches, lambda_feat, lambda_adv, lambda_img, batch_size, lr = load_checkpoint(DS, optim_gen, optim_discr, filename=path2)
 
 # Some required math
 bce = nn.BCEWithLogitsLoss(reduction='mean').to(device)

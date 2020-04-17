@@ -45,8 +45,7 @@ optim_gen, optim_discr = get_optimizers(DS, lr)
 load_model = False
 if load_model == True:
     path = "./chk/14_04_2020-09-56-50_330_128.ptm"
-    DS, optim_gen, optim_discr, epoch, training_batches, lambda_feat,\
-        lambda_adv, lambda_img, batch_size, lr = load_checkpoint(DS, optim_gen, optim_discr, filename=path)
+    DS, optim_gen, optim_discr, epoch, training_batches, lambda_feat, lambda_adv, lambda_img, batch_size, lr = load_checkpoint(DS, optim_gen, optim_discr, filename=path)
 
 # Some required math
 bce = nn.BCEWithLogitsLoss(reduction='mean').to(device)
