@@ -17,14 +17,17 @@ from torch.utils.data import Dataset, DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 # Parameters
-lambda_feat=0.01
-lambda_adv=0.001
-lambda_img=1.0
-batch_size = 64
+# Old parameters
+# lambda_feat=0.01
+# lambda_adv=0.001
+# lambda_img=1.0
+lambda_feat= 0.01
+lambda_adv= 100
+lambda_img= 0.000002
+batch_size = 256
 epochs = 100
 training_batches = 0
 path = "./chk/"
-
 
 # CUDA - need to tweak this to run on a CPU.
 DS = DeepSim() 
