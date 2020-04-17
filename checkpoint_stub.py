@@ -6,7 +6,7 @@ from optimizer_stub import get_optimizers
 
 def save_checkpoint(path, ds, optG, optD, training_batches, lambda_feat, lambda_adv, lambda_img, batch_size, epoch):
     dt_string = strftime("%d_%m_%Y-%H-%M-%S")
-    path = path + dt_string + "_" + str(training_batches) + "_" + str(batch_size) + ".ptm"
+    path = path + dt_string + "_" + str(training_batches) + "_" + str(batch_size) + "_lf" +  str(lambda_feat) + "_la" +  str(lambda_adv)+ "_li" +  str(lambda_img)+ "_li" + ".ptm"
     print("saving model checkpoint to:", path)	
     torch.save({
                 'ds_state_dict': ds.state_dict(),

@@ -21,10 +21,16 @@ from torch.utils.tensorboard import SummaryWriter
 # lambda_feat=0.01
 # lambda_adv=0.001
 # lambda_img=1.0
+
+# previous set
+# lambda_feat= 0.01
+# lambda_adv= 100
+# lambda_img= 0.000002
+
 lambda_feat= 0.01
-lambda_adv= 100
-lambda_img= 0.000002
-batch_size = 64
+lambda_adv= 1
+lambda_img= 0.01
+batch_size = 128
 epochs = 100
 training_batches = 0
 path = "./chk/"
