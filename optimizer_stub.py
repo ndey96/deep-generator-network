@@ -6,16 +6,13 @@ def get_optimizers(DS):
 
     optim_gen = torch.optim.Adam(
         DS.module.G.parameters(),
-        # pre hyper-parameter change lr
-        # lr=0.0002,
-        lr=0.0001,
+        lr=0.0002,
         betas=(0.9, 0.999),
         weight_decay=1e-4)
 
     optim_discr = torch.optim.Adam(
         DS.module.D.parameters(),
-        # pre hyper-parameter change lr
-        lr=0.0001,
+        lr=0.0002,
         betas=(0.9, 0.999),
         weight_decay=1e-4)
 

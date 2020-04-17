@@ -43,7 +43,7 @@ class TransposeConvGenerator(nn.Module):
     def __init__(self):
         super(TransposeConvGenerator, self).__init__()
         # https://github.com/shijx12/DeepSim/blob/master/deepSimGAN/deepSimNet.py
-        negative_slope = 0.3
+        negative_slope = 0.01
         self.epochs = 0
         self.batch_size = 128
         self.deconv_output_size = 256
@@ -145,7 +145,7 @@ class UpsampleConvGenerator(nn.Module):
 
     def __init__(self):
         super(UpsampleConvGenerator, self).__init__()
-        negative_slope = 0.3
+        negative_slope = 0.01
         self.deconv_output_size = 256
         self.desired_output_size = 227
         self.fully_connected = nn.Sequential(
@@ -240,7 +240,7 @@ class Discriminator(nn.Module):
 
     def __init__(self):
         super(Discriminator, self).__init__()
-        negative_slope = 0.3
+        negative_slope = 0.01
         self.conv = nn.Sequential(  # input: 227x227x3
             nn.Conv2d(
                 in_channels=3,
