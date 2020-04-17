@@ -225,8 +225,7 @@ class UpsampleConvGenerator(nn.Module):
                 kernel_size=3,
                 stride=1,
                 padding=1),  # 256x256x3
-            nn.Tanh()
-        )
+            nn.Tanh())
 
     def forward(self, x):
         x = self.fully_connected(x)  # 4096
@@ -323,7 +322,7 @@ class DeepSim(nn.Module):
         cgx = self.C(gx)
         cy = self.C(y)
         dgx = self.D(gx, cgx)
-        dy = self.D(y, cx)
+        dy = self.D(y, cy)
         return y, x, gx, egx, cgx, cy, dgx, dy
 
 
@@ -349,6 +348,6 @@ class DeepGen(nn.Module):
         egx = self.E(gx)
         cgx = self.C(gx)
         cy = self.C(y)
-        dgx = self.D(gx, egx)
-        dy = self.D(y, x)
+        dgx = self.D(gx, cgx)
+        dy = self.D(y, cy)
         return y, x, gx, egx, cgx, cy, dgx, dy
