@@ -24,6 +24,7 @@ from torch.utils.tensorboard import SummaryWriter
 lambda_feat= 0.01
 lambda_adv= 100
 lambda_img= 0.000002
+lr = 0.0002
 batch_size = 256
 epochs = 100
 training_batches = 0
@@ -38,14 +39,14 @@ if torch.cuda.device_count() > 1:
 DS.to(device)
 DS.module.batch_size = batch_size
 # Set up optimizers
-optim_gen, optim_discr = get_optimizers(DS)
+optim_gen, optim_discr = get_optimizers(DS, lr)
 
 # Load checkpoint
 load_model = False
 if load_model == True:
     path = "./chk/14_04_2020-09-56-50_330_128.ptm"
     DS, optim_gen, optim_discr, epoch, training_batches, lambda_feat,\
-        lambda_adv, lambda_img, batch_size = load_checkpoint(DS, optim_gen, optim_discr, filename=path)
+        lambda_adv, lambda_img, batch_size, lr = load_checkpoint(DS, optim_gen, optim_discr, filename=path)
 
 # Some required math
 bce = nn.BCEWithLogitsLoss(reduction='mean').to(device)
@@ -151,7 +152,7 @@ for i in range(epochs):
             del loss_feat; del loss_img; del loss_adv; del loss_discr; del loss_gen
 
     # Save a checkpoint
-    save_checkpoint(path, DS, optim_gen, optim_discr, training_batches, lambda_feat, lambda_adv, lambda_img, batch_size, i)
+    save_checkpoint(path, DS, optim_gen, optim_discr, training_batches, lambda_feat, lambda_adv, lambda_img, batch_size, i, lr)
 
     grid_images = torch.cat((input_var[:5], gx[:5]))
     grid00 = torchvision.utils.make_grid(grid_images, nrow=5, normalize=True)

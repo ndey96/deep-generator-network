@@ -44,7 +44,7 @@ if torch.cuda.device_count() > 1:
 DS.to(device)
 DS.module.batch_size = batch_size
 # Set up optimizers
-optim_gen, optim_discr = get_optimizers(DS)
+optim_gen, optim_discr = get_optimizers(DS, lr)
 
 # Load checkpoint
 load_model = False
@@ -53,7 +53,7 @@ if load_model == True:
     # path2 = "./chk/pre_hp_change/7_04_2020-09-02-41_120105_160.ptm"
     path2 = "./chk/pre_hp_change/7_04_2020-09-02-41_120105_160.ptm"
     DS, optim_gen, optim_discr, epoch, training_batches, lambda_feat,\
-        lambda_adv, lambda_img, batch_size = load_checkpoint(DS, optim_gen, optim_discr, filename=path2)
+        lambda_adv, lambda_img, batch_size, lr = load_checkpoint(DS, optim_gen, optim_discr, filename=path2)
 
 # Some required math
 bce = nn.BCEWithLogitsLoss(reduction='mean').to(device)
@@ -158,7 +158,7 @@ for i in range(epochs):
             del loss_feat; del loss_img; del loss_adv; del loss_discr; del loss_gen
 
     # Save a checkpoint
-    save_checkpoint(path, DS, optim_gen, optim_discr, training_batches, lambda_feat, lambda_adv, lambda_img, batch_size, i)
+    save_checkpoint(path, DS, optim_gen, optim_discr, training_batches, lambda_feat, lambda_adv, lambda_img, batch_size, i, lr)
 
     grid_images = torch.cat((input_var[:5], gx[:5]))
     grid00 = torchvision.utils.make_grid(grid_images, nrow=5, normalize=True)

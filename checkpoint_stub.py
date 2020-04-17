@@ -4,9 +4,10 @@ from time import gmtime, strftime
 from models_parallel import DeepSim
 from optimizer_stub import get_optimizers
 
-def save_checkpoint(path, ds, optG, optD, training_batches, lambda_feat, lambda_adv, lambda_img, batch_size, epoch):
+def save_checkpoint(path, ds, optG, optD, training_batches, lambda_feat, lambda_adv, lambda_img, batch_size, epoch, lr):
     dt_string = strftime("%d_%m_%Y-%H-%M-%S")
-    path = path + dt_string + "_" + str(training_batches) + "_" + str(batch_size) + "_lf" +  str(lambda_feat) + "_la" +  str(lambda_adv)+ "_li" +  str(lambda_img)+ "_li" + ".ptm"
+    path = path + dt_string + "_" + str(training_batches) + "_" + str(batch_size) + "_lf" +  str(lambda_feat) + "_la"\ 
+        +  str(lambda_adv)+ "_li" +  str(lambda_img)+ "_lr" +  str(lr) + ".ptm"
     print("saving model checkpoint to:", path)	
     torch.save({
                 'ds_state_dict': ds.state_dict(),
@@ -17,7 +18,8 @@ def save_checkpoint(path, ds, optG, optD, training_batches, lambda_feat, lambda_
                 'lambda_feat' : lambda_feat,
                 'lambda_adv' : lambda_adv,
                 'lambda_img' : lambda_img,
-                'batch_size' : batch_size
+                'batch_size' : batch_size,
+                'lr' : lr
                 }, path)
     return
 
@@ -35,10 +37,11 @@ def load_checkpoint(DS, optim_gen, optim_discr, filename='checkpoint.pth.tar'):
         lambda_adv = checkpoint['lambda_adv']
         lambda_img = checkpoint['lambda_img']
         batch_size = checkpoint['batch_size']
+        lr = checkpoint['lr']
         print("=> loaded checkpoint '{}' (epoch {})"
                   .format(filename, checkpoint['epoch']))
     else:
         print("=> no checkpoint found at '{}'".format(filename))
 
-    return DS, optim_gen, optim_discr, epoch, training_batches, lambda_feat, lambda_adv, lambda_img, batch_size
+    return DS, optim_gen, optim_discr, epoch, training_batches, lambda_feat, lambda_adv, lambda_img, batch_size, lr
 
