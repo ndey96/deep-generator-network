@@ -28,7 +28,7 @@ class AlexNetEncoder(nn.Module):
         self.desired_output_size = 227
         self.features = original_model.features
         self.avgpool = original_model.avgpool
-        self.classifier = original_model.classifier[:5]
+        self.classifier = original_model.classifier[:3]
 
     def forward(self, x):
         x = self.features(x)
@@ -44,7 +44,7 @@ class TransposeConvGenerator(nn.Module):
         super(TransposeConvGenerator, self).__init__()
         # https://github.com/shijx12/DeepSim/blob/master/deepSimGAN/deepSimNet.py
         negative_slope = 0.3
-        self.epochs = 0 
+        self.epochs = 0
         self.batch_size = 128
         self.deconv_output_size = 256
         self.desired_output_size = 227
@@ -130,8 +130,7 @@ class TransposeConvGenerator(nn.Module):
                 kernel_size=4,
                 stride=2,
                 padding=1),  # 256x256x3                    #deconv0
-            nn.Tanh()
-        )
+            nn.Tanh())
 
     def forward(self, x):
         x = self.fully_connected(x)  # 4096
@@ -277,8 +276,8 @@ class Discriminator(nn.Module):
                 padding=0),  # 12x12x256
             nn.AvgPool2d(kernel_size=12, stride=12))  # 1x1x256
 
-        self.features_fc = nn.Sequential(  # input: 4096
-            nn.Linear(4096, 1024),
+        self.features_fc = nn.Sequential(  # input: 9216
+            nn.Linear(9216, 1024),
             nn.LeakyReLU(negative_slope=negative_slope),
             nn.Linear(1024, 512),
             nn.LeakyReLU(negative_slope=negative_slope),
@@ -329,6 +328,6 @@ class DeepSim(nn.Module):
         egx = self.E(gx)
         cgx = self.C(gx)
         cy = self.C(y)
-        dgx = self.D(gx, egx)
-        dy = self.D(y, x)
+        dgx = self.D(gx, cgx)
+        dy = self.D(y, cx)
         return y, x, gx, egx, cgx, cy, dgx, dy
