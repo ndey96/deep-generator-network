@@ -110,10 +110,10 @@ for i in range(epochs):
             # anti-over-fitting
             loss_discr_ratio = loss_discr / loss_adv
 
-            if loss_discr_ratio < 1e-1
+            if loss_discr_ratio < 1e-1:
                 train_discrimin = False
 
-            if loss_discr_ratio > 5e-1 
+            if loss_discr_ratio > 5e-1:
                 train_discrimin = True
             
             # book-keeping and reporting
