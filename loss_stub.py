@@ -6,9 +6,6 @@ def compute_loss(y, x, gx, egx, cgx, cy, dgx, dy, t_ones, t_zeros, bce, mse, lam
         loss_img = mse(gx, y)
         real_d = torch.flatten(dy)
         gen_d = torch.flatten(dgx)
-        if gen_d.size() != t_ones.size():
-                print("trapped") 
-        loss_adv = bce(gen_d, t_ones)
         loss_adv = bce(gen_d, t_ones)
         loss_discr = bce(real_d, t_ones)  \
                         + bce(gen_d, t_zeros)

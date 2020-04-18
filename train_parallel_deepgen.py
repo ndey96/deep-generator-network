@@ -27,12 +27,13 @@ from torch.utils.tensorboard import SummaryWriter
 # lambda_adv= 100
 # lambda_img= 0.000002
 
-lambda_feat= 0.01
-lambda_adv= 1
-lambda_img= 0.01
+lambda_feat= 1
+lambda_adv= 0.5
+lambda_img= 3
+lr = 0.0002
+
 batch_size = 128
 epochs = 100
-lr = 0.0002
 training_batches = 0
 path = "./chk/"
 
@@ -101,7 +102,16 @@ for i in range(epochs):
                 compute_loss(y, x, gx, egx, cgx, cy, dgx, dy, t_ones, 
                     t_zeros, bce, mse, lambda_feat, lambda_adv,
                     lambda_img)
-            
+
+            loss_discr_ratio = loss_discr / loss_adv
+
+            # anti-over-fitting
+            if loss_discr_ratio < 1e-1
+                train_discrimin = False
+
+            if loss_discr_ratio > 5e-1 
+                train_discrimin = True
+
             # apply backprop on the optimizers
             if train_generator:
                 optim_gen.zero_grad()
@@ -112,41 +122,18 @@ for i in range(epochs):
                 optim_discr.zero_grad()
                 loss_discr.backward(retain_graph=True)
                 optim_discr.step()
-
-            loss_discr_ratio = torch.mean((dy + dgx) / loss_discr)
-
-            # anti-over-fitting
-            if loss_discr_ratio < 1e-1 and train_discrimin:
-                train_discrimin = False
-                train_generator = True
-                print("case1")
-
-            if loss_discr_ratio > 5e-1 and not train_discrimin:
-                train_discrimin = True
-                train_generator = True
-                print("case2")
-
-            if loss_discr_ratio > 1e1 and train_generator:
-                train_generator = False
-                train_discrimin = True
-                print("case3")
-
-            train_generator = True
-            train_discrimin = True
             
             # book-keeping and reporting
             n = training_batches * batch_size
             lf = lambda_feat * loss_feat.detach()
             la = lambda_adv * loss_adv.detach()
             li = lambda_img * loss_img.detach()
-            tl = lf + la + li
 
             writer.add_scalar('train/dg_loss_gen', loss_gen.detach(), n )
             writer.add_scalar('train/dg_loss_discr', loss_discr.detach(), n)
             writer.add_scalar('train/dg_loss_feat', lf, n)
             writer.add_scalar('train/dg_loss_adv', la, n)
             writer.add_scalar('train/dg_loss_img', li, n)
-            writer.add_scalar('train/dg_loss_total', tl, n)
 
             if verbose:
                 print('[TRAIN] {:3.0f} : Gen_Loss={:0.5} -- Dis_Loss={:0.5}'.
@@ -186,14 +173,12 @@ for i in range(epochs):
             lf = lambda_feat * loss_feat.detach()
             la = lambda_adv * loss_adv.detach()
             li = lambda_img * loss_img.detach()
-            tl = lf + la + li
 
             writer.add_scalar('val/dg_loss_gen', loss_gen.detach(), n )
             writer.add_scalar('val/dg_loss_discr', loss_discr.detach(), n)
             writer.add_scalar('val/dg_loss_feat', lf, n)
             writer.add_scalar('val/dg_loss_adv', la, n)
             writer.add_scalar('val/dg_loss_img', li, n)
-            writer.add_scalar('val/dg_loss_total', tl, n)
 
             if verbose:
                 print('[VALID] {:3.0f} : Gen_Loss={:0.5} -- Dis_Loss={:0.5}'.
