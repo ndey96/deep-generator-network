@@ -17,20 +17,10 @@ from torch.utils.tensorboard import SummaryWriter
 
 
 # Parameters
-# Old parameters
-# lambda_feat=0.01
-# lambda_adv=0.001
-# lambda_img=1.0
-
-# previous set
-# lambda_feat= 0.01
-# lambda_adv= 100
-# lambda_img= 0.000002
-
 lambda_feat= 1
-lambda_adv= 0.5
+lambda_adv= 0.125
 lambda_img= 3
-lr = 0.0002
+lr = 0.0001
 
 batch_size = 128
 epochs = 100
@@ -49,7 +39,7 @@ DS.module.batch_size = batch_size
 optim_gen, optim_discr = get_optimizers(DS, lr)
 
 # Load checkpoint
-load_model = True
+load_model = False
 if load_model == True:
     # changed lr to 
     # path2 = "./chk/pre_hp_change/7_04_2020-09-02-41_120105_160.ptm"
@@ -134,6 +124,9 @@ for i in range(epochs):
             writer.add_scalar('train/dg_loss_feat', lf, n)
             writer.add_scalar('train/dg_loss_adv', la, n)
             writer.add_scalar('train/dg_loss_img', li, n)
+            writer.add_scalar('train/dg_discr_train', int(train_discrimin), n)
+            writer.add_scalar('train/dg_optim_discr_lr', optim_discr.param_groups[0]['lr'], n)
+            writer.add_scalar('train/dg_optim_gen_lr', optim_gen.param_groups[0]['lr'], n)
 
             if verbose:
                 print('[TRAIN] {:3.0f} : Gen_Loss={:0.5} -- Dis_Loss={:0.5}'.

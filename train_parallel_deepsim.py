@@ -17,13 +17,8 @@ from torch.utils.data import Dataset, DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 # Parameters
-# Old parameters
-# lambda_feat=0.01
-# lambda_adv=0.001
-# lambda_img=1.0
-
 lambda_feat= 1
-lambda_adv= 0.5
+lambda_adv= 1.75
 lambda_img= 3
 lr = 0.0002
 
@@ -44,7 +39,7 @@ DS.module.batch_size = batch_size
 optim_gen, optim_discr = get_optimizers(DS, lr)
 
 # Load checkpoint
-load_model = True
+load_model = False
 if load_model == True:
     path2 = "./chk/17_04_2020-18-06-25_5004_256_lf0.01_la100_li2e-06_lr0.0002.ptm"
     DS, optim_gen, optim_discr, epoch, training_batches, lambda_feat, lambda_adv, lambda_img, batch_size, lr = load_checkpoint(DS, optim_gen, optim_discr, filename=path2)
@@ -95,7 +90,16 @@ for i in range(epochs):
                 compute_loss(y, x, gx, egx, cgx, cy, dgx, dy, t_ones, 
                     t_zeros, bce, mse, lambda_feat, lambda_adv,
                     lambda_img)
-            
+
+            # anti-over-fitting
+            loss_discr_ratio = loss_discr / loss_adv
+
+            if loss_discr_ratio < 1e-1:
+                train_discrimin = False
+
+            if loss_discr_ratio > 5e-1:
+                train_discrimin = True
+
             # apply backprop on the optimizers
             if train_generator:
                 optim_gen.zero_grad()
@@ -107,14 +111,6 @@ for i in range(epochs):
                 loss_discr.backward(retain_graph=True)
                 optim_discr.step()
 
-            # anti-over-fitting
-            loss_discr_ratio = loss_discr / loss_adv
-
-            if loss_discr_ratio < 1e-1:
-                train_discrimin = False
-
-            if loss_discr_ratio > 5e-1:
-                train_discrimin = True
             
             # book-keeping and reporting
             n = training_batches * batch_size
@@ -127,6 +123,9 @@ for i in range(epochs):
             writer.add_scalar('train/ds_loss_feat', lf, n)
             writer.add_scalar('train/ds_loss_adv', la, n)
             writer.add_scalar('train/ds_loss_img', li, n)
+            writer.add_scalar('train/ds_discr_train', int(train_discrimin), n)
+            writer.add_scalar('train/ds_optim_discr_lr', optim_discr.param_groups[0]['lr'], n)
+            writer.add_scalar('train/ds_optim_gen_lr', optim_gen.param_groups[0]['lr'], n)
 
             if verbose:
                 print('[TRAIN] {:3.0f} : Gen_Loss={:0.5} -- Dis_Loss={:0.5}'.
