@@ -248,6 +248,7 @@ class Discriminator(nn.Module):
                 kernel_size=7,
                 stride=4,
                 padding=0),  # 56x56x32
+            nn.LeakyReLU(negative_slope=negative_slope),
             nn.Conv2d(
                 in_channels=32,
                 out_channels=64,
@@ -255,12 +256,14 @@ class Discriminator(nn.Module):
                 stride=1,
                 padding=0),  # 52x52x64
             nn.ZeroPad2d((1, 0, 1, 0)),  # 53x53x64
+            nn.LeakyReLU(negative_slope=negative_slope),
             nn.Conv2d(
                 in_channels=64,
                 out_channels=128,
                 kernel_size=3,
                 stride=2,
                 padding=0),  # 26x26x128
+            nn.LeakyReLU(negative_slope=negative_slope),
             nn.Conv2d(
                 in_channels=128,
                 out_channels=256,
@@ -268,12 +271,82 @@ class Discriminator(nn.Module):
                 stride=1,
                 padding=0),  # 24x24x256
             nn.ZeroPad2d((1, 0, 1, 0)),  # 25x25x256
+            nn.LeakyReLU(negative_slope=negative_slope),
             nn.Conv2d(
                 in_channels=256,
                 out_channels=256,
                 kernel_size=3,
                 stride=2,
                 padding=0),  # 12x12x256
+            nn.LeakyReLU(negative_slope=negative_slope),
+            nn.AvgPool2d(kernel_size=12, stride=12))  # 1x1x256
+
+        self.features_fc = nn.Sequential(  # input: 9216
+            nn.Linear(9216, 1024),
+            nn.LeakyReLU(negative_slope=negative_slope),
+            nn.Linear(1024, 512),
+            nn.LeakyReLU(negative_slope=negative_slope),
+        )
+        self.fc = nn.Sequential(
+            nn.Dropout(0.5),
+            nn.Linear(768, 512),
+            nn.LeakyReLU(negative_slope=negative_slope),
+            nn.Dropout(0.5),
+            nn.Linear(512, 1),
+        )
+
+    def forward(self, image, features):
+        x1 = self.conv(image)  # 1x1x256
+        x1 = torch.flatten(x1, 1)  # 256
+        x2 = self.features_fc(features)  # 512
+        x = torch.cat((x1, x2), dim=1)  # 768
+        x = self.fc(x)  # 1
+        return x
+
+
+class DownsampleDiscriminator(nn.Module):
+
+    def __init__(self):
+        super(DownsampleDiscriminator, self).__init__()
+        negative_slope = 0.01
+        self.conv = nn.Sequential(  # input: 227x227x3
+            nn.Conv2d(
+                in_channels=3,
+                out_channels=32,
+                kernel_size=7,
+                stride=4,
+                padding=0),  # 56x56x32
+            nn.LeakyReLU(negative_slope=negative_slope),
+            nn.Conv2d(
+                in_channels=32,
+                out_channels=64,
+                kernel_size=5,
+                stride=1,
+                padding=0),  # 52x52x64
+            nn.ZeroPad2d((1, 0, 1, 0)),  # 53x53x64
+            nn.LeakyReLU(negative_slope=negative_slope),
+            nn.Conv2d(
+                in_channels=64,
+                out_channels=128,
+                kernel_size=3,
+                stride=2,
+                padding=0),  # 26x26x128
+            nn.LeakyReLU(negative_slope=negative_slope),
+            nn.Conv2d(
+                in_channels=128,
+                out_channels=256,
+                kernel_size=3,
+                stride=1,
+                padding=0),  # 24x24x256
+            nn.ZeroPad2d((1, 0, 1, 0)),  # 25x25x256
+            nn.LeakyReLU(negative_slope=negative_slope),
+            nn.Conv2d(
+                in_channels=256,
+                out_channels=256,
+                kernel_size=3,
+                stride=2,
+                padding=0),  # 12x12x256
+            nn.LeakyReLU(negative_slope=negative_slope),
             nn.AvgPool2d(kernel_size=12, stride=12))  # 1x1x256
 
         self.features_fc = nn.Sequential(  # input: 9216
