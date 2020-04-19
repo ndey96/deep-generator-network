@@ -326,7 +326,7 @@ class DownsampleDiscriminator(nn.Module):
                 stride=1,
                 padding=1),  # 224x224x32
             nn.LeakyReLU(negative_slope=negative_slope),
-            nn.AvgPool2d(kernel_size=113, stride=1),  # 112x112x32
+            nn.AvgPool2d(kernel_size=2, stride=2),  # 112x112x32
             nn.Conv2d(
                 in_channels=32,
                 out_channels=32,
@@ -341,7 +341,7 @@ class DownsampleDiscriminator(nn.Module):
                 stride=1,
                 padding=1),  # 112x112x64
             nn.LeakyReLU(negative_slope=negative_slope),
-            nn.AvgPool2d(kernel_size=57, stride=1),  # 56x56x64
+            nn.AvgPool2d(kernel_size=2, stride=2),  # 56x56x64
             nn.Conv2d(
                 in_channels=64,
                 out_channels=64,
@@ -356,7 +356,7 @@ class DownsampleDiscriminator(nn.Module):
                 stride=1,
                 padding=1),  # 56x56x128
             nn.LeakyReLU(negative_slope=negative_slope),
-            nn.AvgPool2d(kernel_size=29, stride=1),  # 28x28x128
+            nn.AvgPool2d(kernel_size=2, stride=2),  # 28x28x128
             nn.Conv2d(
                 in_channels=128,
                 out_channels=128,
@@ -364,7 +364,7 @@ class DownsampleDiscriminator(nn.Module):
                 stride=1,
                 padding=1),  # 28x28x128
             nn.LeakyReLU(negative_slope=negative_slope),
-            nn.AvgPool2d(kernel_size=15, stride=1),  # 14x14x128
+            nn.AvgPool2d(kernel_size=2, stride=2),  # 14x14x128
             nn.Conv2d(
                 in_channels=128,
                 out_channels=128,

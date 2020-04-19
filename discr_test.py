@@ -1,8 +1,8 @@
 import torch
 from models_parallel import DownsampleDiscriminator
 
-feat = torch.rand(2, 9216)
-img = torch.rand(2, 3, 224, 224)
+feat = torch.rand(64, 9216)
+img = torch.rand(64, 3, 224, 224)
 
 D = DownsampleDiscriminator()
 D.eval()

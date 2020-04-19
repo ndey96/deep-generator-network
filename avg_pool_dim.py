@@ -1,8 +1,8 @@
 # helper script for avg_pool dimension calculation
 
-Hin = 224
-kernel_size = 113
-stride = 1
+Hin = 112
+kernel_size = 2
+stride = 2
 padding = 0
 
 Hout = (Hin + 2 * padding - kernel_size) / stride + 1
