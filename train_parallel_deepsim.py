@@ -18,9 +18,9 @@ from torch.utils.tensorboard import SummaryWriter
 
 # Parameters
 lambda_feat= 1
-lambda_adv= 1.75
+lambda_adv= 0.0625
 lambda_img= 3
-lr = 0.0002
+lr = 0.0001
 
 batch_size = 256
 epochs = 100
