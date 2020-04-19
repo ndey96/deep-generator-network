@@ -1,6 +1,6 @@
 # helper script for conv dimension calculation
 
-Hin = 8
+Hin = 227
 kernel_size = 3
 stride = 1
 padding = 0
