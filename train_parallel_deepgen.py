@@ -15,10 +15,11 @@ from optimizer_stub import get_optimizers
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-
+# lambda_adv= 0.125 got loss of 5.5 in 1.3M
+# lambda_adv= 0.0625 got loss of 5.2 in 1.3M
 # Parameters
 lambda_feat= 1
-lambda_adv= 0.125
+lambda_adv= 0.0625
 lambda_img= 3
 lr = 0.0001
 
