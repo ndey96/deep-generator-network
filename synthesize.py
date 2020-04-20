@@ -34,9 +34,9 @@ def get_args():
     parser.add_argument('--sim',   action='store_true', default=False, help='Pass the provided image through the DeepSim architecture              (default: {})'.format('DISABLED'))
     parser.add_argument('--gen',   action='store_true', default=False, help='Pass the provided image through the DeepGen architecture              (default: {})'.format('DISABLED'))
     parser.add_argument('--show',  action='store_true', default=False, help='Show the initial and generated images                                 (default: {})'.format('DISABLED'))
-    parser.add_argument('--save',  action='store_true', default=False, help='Save the output generated image                                       (default: {})'.format('DISABLED'))
     parser.add_argument('--vid',   action='store_true', default=False, help='Save the morphing images as a .mp4                                    (default: {})'.format('DISABLED'))
     parser.add_argument('--freq',  type=int, default=1,                help='Frequency at which images should be saved for .mp4                    (default: {})'.format(1))
+    parser.add_argument('--save',  action='store_true', default=False, help='Save the output generated image                                       (default: {})'.format('DISABLED'))
     parser.add_argument('--cuda',  action='store_true', default=False, help='Enable CUDA for processing                                            (default: {})'.format('DISABLED'))
     parser.add_argument('--verb',  action='store_true', default=False, help='Enable Verbose output                                                 (default: {})'.format('DISABLED'))
     args = parser.parse_args()
@@ -50,7 +50,8 @@ def get_args():
 
     return args
 
-
+# Load the standard deviation of codes for each node from the encoder.
+magic_numbers = np.load('temp_magic_numbers.npy')
 
 def convert(img, target_type_min, target_type_max, target_type):
     imin = img.min()
@@ -142,15 +143,15 @@ def synthesize(model, classifier, neuron=0, num_steps=300, lr=0.005, wdecay=0.00
                 print("[INFO] {:03d} : {} ?= {}".format(step, torch.argmax(out), neuron), 
                     "\n   loss  = {}".format(loss.data), 
                     "\n   class = {}".format(out[0,:5].data), 
-                    "\n   code  = {}".format(code[0,:5].data),
-                    "\n   clamp = {}".format(code[0,:5].data))
+                    "\n   code  = {}".format(code[0,:5].data))
 
             return loss
         
         optimizer.step(closure)
 
         with torch.no_grad():
-            code.clamp_(min=0, max=3.0*code.std().item())
+            for cde, stdv in zip(code[0], magic_numbers):
+                cde.clamp_(min=0, max=3.0*stdv)
 
         if keep_steps and ((step % keep_freq) == 0):
             y = model.module.G(code)
