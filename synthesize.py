@@ -196,7 +196,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
 
     from torchvision.models import alexnet
     import torch
@@ -204,13 +204,18 @@ if __name__ == "__main__":
     img = torch.rand(1, 3, 224, 224)
     img.requires_grad = True
     optimizer = torch.optim.LBFGS([img])
-    for i in range(1000):
-        optimizer.zero_grad()
-        acts = a.forward(img)
-        candle_act = acts[:, 0]
-        loss = -candle_act
-        loss.backward()
-        print(img.grad.shape)  # to show that img.grad gets populated
-        optimizer.step()
+    for i in range(10):
 
-    plt.imshow(img.detach().numpy())
+        def closure():
+            optimizer.zero_grad()
+            acts = a.forward(img)
+            candle_act = acts[:, 0]
+            loss = -candle_act
+            loss.backward()
+            print(img.grad.shape)  # to show that img.grad gets populated
+            return loss
+
+    optimizer.step(closure)
+    img_to_show = img.detach().numpy()[0].reshape(224, 224, 3)
+    plt.imshow(img_to_show)
+    plt.show()
