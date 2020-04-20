@@ -99,7 +99,7 @@ for i in range(epochs):
             loss_discr_ratio = loss_discr / loss_adv
             if loss_discr_ratio < 1e-1:
                 train_discrimin = False
-            if loss_discr_ratio > 5e-1:
+            else:
                 train_discrimin = True
 
             # apply backprop on the optimizers
