@@ -97,14 +97,9 @@ for i in range(epochs):
 
             # Make sure gen and discr don't get too far ahead of each other
             loss_discr_ratio = loss_discr / loss_adv
-            if loss_discr_ratio < 1e-1 and train_discrimin:  # discr is ahead of gen
+            if loss_discr_ratio < 1e-1:
                 train_discrimin = False
-                train_generator = True
-            if loss_discr_ratio > 5e-1 and not train_discrimin:  # gen ~= discr
-                train_discrimin = True
-                train_generator = True
-            if loss_discr_ratio > 1e1 and train_generator:  # gen is ahead of discr
-                train_generator = False
+            if loss_discr_ratio > 5e-1:
                 train_discrimin = True
 
             # apply backprop on the optimizers
