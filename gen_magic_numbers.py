@@ -33,7 +33,7 @@ for k, (inp, _) in enumerate(val_loader):
 
 
 # NICK: This line hopefully won't throw an error.
-codes = np.asarray(running).reshape(-1, 1000)
+codes = np.asarray(running).reshape(-1, 4096)
 
 stdev = codes.std(axis=0)
 np.save('magic_numbers', stdev)
