@@ -79,7 +79,7 @@ def show_vid(img, name="", save=False, verbose=False):
         import imageio
         img_gif = convert(np.asarray(img), 0, 255, np.uint8)
         imageio.mimwrite('img/{}.gif'.format(name), img_gif, fps=32)
-        if verbose: print('[INFO] Saved ``{}.fig``'.format(name))
+        if verbose: print('[INFO] Saved ``{}.gif``'.format(name))
         
     return
     
@@ -120,7 +120,7 @@ def synthesize(model, classifier, neuron=0, num_steps=300, lr=0.005, wdecay=0.00
         meta = 0
 
         def closure():
-            
+
             optimizer.zero_grad()
 
             # Produce an image from the code.          
@@ -131,34 +131,30 @@ def synthesize(model, classifier, neuron=0, num_steps=300, lr=0.005, wdecay=0.00
             
             # Try to classify this image
             out = classifier(y)
-
-            #TODO: REVIST CLAMP.
-            #out = torch.clamp(
-            #    out, 
-            #    min = -3.0*torch.std(out[0]).item(), 
-            #    max =  3.0*torch.std(out[0]).item()
-            #)
             
             # Get the loss with L2 weight decay.
             loss = -out[0, neuron] + wdecay * torch.sum( code**2 )
 
+            #loss.backward(retain_graph=True)
             loss.backward()
             
             if verbose:
                 print("[INFO] {:03d} : {} ?= {}".format(step, torch.argmax(out), neuron), 
                     "\n   loss  = {}".format(loss.data), 
                     "\n   class = {}".format(out[0,:5].data), 
-                    "\n   code  = {}".format(code[0,:5].data))
+                    "\n   code  = {}".format(code[0,:5].data),
+                    "\n   clamp = {}".format(code[0,:5].data))
 
             return loss
         
         optimizer.step(closure)
 
+        with torch.no_grad():
+            code.clamp_(min=0, max=3.0*code.std().item())
+
         if keep_steps and ((step % keep_freq) == 0):
-            
             y = model.module.G(code)
             y = (y + 1.0 ) / 2.0
-            
             keep_imgs.append(y.cpu().detach().numpy().T.reshape(*dims))
 
 
@@ -170,10 +166,7 @@ def synthesize(model, classifier, neuron=0, num_steps=300, lr=0.005, wdecay=0.00
     
     out_img = y.cpu().detach().numpy().T.reshape(*dims)
     out_cls = torch.argmax(out).cpu().detach().numpy()
-    
-    #TODO: REMOVE.
-    print(out_img.max(), out_img.min())
-    
+        
     return out_img, out_cls, keep_imgs
 
 
