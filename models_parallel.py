@@ -397,17 +397,13 @@ class DownsampleDiscriminator(nn.Module):
         )
 
     def forward(self, image, features):
-        # print(1)
-        x1 = self.conv(image)  # 1x1x256
-        # print(2)
+        cropped_img = center_crop(
+            img, current_size=227, desired_size=224)  # 224x224x3
+        x1 = self.conv(cropped_img)  # 1x1x256
         x1 = torch.flatten(x1, 1)  # 256
-        # print(3)
         x2 = self.features_fc(features)  # 512
-        # print(4)
         x = torch.cat((x1, x2), dim=1)  # 768
-        # print(5)
         x = self.fc(x)  # 1
-        # print(6)
         return x
 
 
