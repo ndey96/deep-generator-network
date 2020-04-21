@@ -126,12 +126,9 @@ for i in range(epochs):
             writer.add_scalar('train/ds_loss_adv', la, n)
             writer.add_scalar('train/ds_loss_img', li, n)
             writer.add_scalar('train/ds_discr_train', int(train_discrimin), n)
-            writer.add_scalar('train/ds_optim_discr_lr',
-                              optim_discr.param_groups[0]['lr'], n)
-            writer.add_scalar('train/ds_optim_gen_lr',
-                              optim_gen.param_groups[0]['lr'], n)
-            writer.add_scalar('train/ds_loss_discr_ratio',
-                              loss_discr_ratio, n)
+            writer.add_scalar('train/ds_optim_discr_lr', optim_discr.param_groups[0]['lr'], n)
+            writer.add_scalar('train/ds_optim_gen_lr', optim_gen.param_groups[0]['lr'], n)
+            writer.add_scalar('train/ds_loss_discr_ratio', loss_discr_ratio, n)
             if verbose:
                 print('[TRAIN] {:3.0f} : Gen_Loss={:0.5} -- Dis_Loss={:0.5}'.
                       format(n, loss_gen, loss_discr))
