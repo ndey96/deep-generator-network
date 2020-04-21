@@ -7,7 +7,7 @@ To train, and generate new training weights, or synthesize using either the prov
 ilsvrc2012 is required local to your machine.  Any hardcoded paths in train_parallel_deep*.py or synthesize.py, to ilsvrc2012 
 training and validation image directories should be set. 
 
-Various parameters can be set- as per the project report 
+Various parameters can be set - you'll have to experiment and read the related papers to get a feel for that. 
 
 Python3, pytorch, pyvision, and tensorboard are required... any other requirements will error out... you can install them. 
 
