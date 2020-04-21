@@ -29,7 +29,7 @@ def get_args():
     # Add arguments to parser.
     #parser.add_argument('--img',  default=None,  help='Path to an image to pass through the selected architecture(s)                 (default: {})'.format('[REQUIRED]')) #TODO: REMOVE. But maybe keep for a style transfer demo...?
     
-    parser.add_argument('--class', type=int, default=0, dest='_class', help='Synthesize the highest activation image of this class. Range=[0, 1000] (default: {})'.format(0)) #TODO: Find which class is ~ C O R N ~
+    parser.add_argument('--cl', type=int, default=0, dest='_class', help='Synthesize the highest activation image of this class. Range=[0, 1000] (default: {})'.format(0)) #TODO: Find which class is ~ C O R N ~
     parser.add_argument('--steps', type=int, default=100,              help='The number of steps that should be taken to find the code.            (default: {})'.format(100))
     parser.add_argument('--sim',   action='store_true', default=False, help='Pass the provided image through the DeepSim architecture              (default: {})'.format('DISABLED'))
     parser.add_argument('--gen',   action='store_true', default=False, help='Pass the provided image through the DeepGen architecture              (default: {})'.format('DISABLED'))
@@ -37,7 +37,7 @@ def get_args():
     parser.add_argument('--gif',   action='store_true', default=False, help='Save the morphing images as a .gif                                    (default: {})'.format('DISABLED'))
     parser.add_argument('--freq',  type=int, default=1,                help='Frequency at which images should be saved for .gif                    (default: {})'.format(1))
     parser.add_argument('--save',  action='store_true', default=False, help='Save the output generated image                                       (default: {})'.format('DISABLED'))
-    parser.add_argument('--name',                       default=None,  help='Name for the output file concat with the network type                 (default: {})'.format('None'))
+    parser.add_argument('--na',    dest='name',                default=None,  help='Name for the output file concat with the network type                 (default: {})'.format('None'))
     parser.add_argument('--cuda',  action='store_true', default=False, help='Enable CUDA for processing                                            (default: {})'.format('DISABLED'))
     parser.add_argument('--verb',  action='store_true', default=False, help='Enable Verbose output                                                 (default: {})'.format('DISABLED'))
     args = parser.parse_args()
