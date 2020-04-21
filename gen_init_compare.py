@@ -8,11 +8,8 @@ import matplotlib.pyplot as plt
 
 def process_img(img):
     img = img.detach().numpy()
-    # img = (img - np.min(img)) / np.ptp(img)
     img = (img + 1) / 2
-    img = img.T.reshape((227, 227, 3))
-    return img
-    # return np.moveaxis(img[0], 0, -1)
+    return np.moveaxis(img[0], 0, -1)
 
 
 ugenerator = UpsampleConvGenerator()
