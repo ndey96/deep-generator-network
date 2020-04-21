@@ -34,85 +34,85 @@ jeans_27=608
 
 # Run all the jobs.
 echo Starting job 01/27 -- Mosque
-python synthesize.py --class $mosque_01     --steps $num_steps --sim --gen --cuda --save --name Mosque
+python synthesize.py --cl $mosque_01     --steps $num_steps --sim --gen --cuda --save --na Mosque
 
 echo Starting job 02/27 -- Lipstick
-python synthesize.py --class $lipstick_02   --steps $num_steps --sim --gen --cuda --save --name Lipstick
+python synthesize.py --cl $lipstick_02   --steps $num_steps --sim --gen --cuda --save --na Lipstick
 
 echo Starting job 03/27 -- Brambling
-python synthesize.py --class $brambling_03  --steps $num_steps --sim --gen --cuda --save --name Brambling
+python synthesize.py --cl $brambling_03  --steps $num_steps --sim --gen --cuda --save --na Brambling
 
 echo Starting job 04/27 -- LeafBeetle
-python synthesize.py --class $leafbeetle_04 --steps $num_steps --sim --gen --cuda --save --name LeafBeetle
+python synthesize.py --cl $leafbeetle_04 --steps $num_steps --sim --gen --cuda --save --na LeafBeetle
 
 echo Starting job 05/27 -- Badger
-python synthesize.py --class $badger_05     --steps $num_steps --sim --gen --cuda --save --name Badger
+python synthesize.py --cl $badger_05     --steps $num_steps --sim --gen --cuda --save --na Badger
 
 echo Starting job 06/27 -- Toaster
-python synthesize.py --class $toaster_06    --steps $num_steps --sim --gen --cuda --save --name Toaster
+python synthesize.py --cl $toaster_06    --steps $num_steps --sim --gen --cuda --save --na Toaster
 
 echo Starting job 07/27 -- TriumphalArch
-python synthesize.py --class $triarch_07    --steps $num_steps --sim --gen --cuda --save --name TriumphalArch
+python synthesize.py --cl $triarch_07    --steps $num_steps --sim --gen --cuda --save --na TriumphalArch
 
 echo Starting job 08/27 -- Cloak
-python synthesize.py --class $cloak_08      --steps $num_steps --sim --gen --cuda --save --name Cloak
+python synthesize.py --cl $cloak_08      --steps $num_steps --sim --gen --cuda --save --na Cloak
 
 echo Starting job 09/27 -- LawnMower
-python synthesize.py --class $lawnmower_09  --steps $num_steps --sim --gen --cuda --save --name LawnMower
+python synthesize.py --cl $lawnmower_09  --steps $num_steps --sim --gen --cuda --save --na LawnMower
 
 echo Starting job 10/27 -- Library
-python synthesize.py --class $library_10    --steps $num_steps --sim --gen --cuda --save --name Library
+python synthesize.py --cl $library_10    --steps $num_steps --sim --gen --cuda --save --na Library
 
 echo Starting job 11/27 -- CheeseBurger
-python synthesize.py --class $cheburger_11  --steps $num_steps --sim --gen --cuda --save --name CheeseBurger
+python synthesize.py --cl $cheburger_11  --steps $num_steps --sim --gen --cuda --save --na CheeseBurger
 
 echo Starting job 12/27 -- SwimmingTrunks
-python synthesize.py --class $swimtrunks_12 --steps $num_steps --sim --gen --cuda --save --name SwimmingTrunks
+python synthesize.py --cl $swimtrunks_12 --steps $num_steps --sim --gen --cuda --save --na SwimmingTrunks
 
 echo Starting job 13/27 -- Barn
-python synthesize.py --class $barn_13       --steps $num_steps --sim --gen --cuda --save --name Barn
+python synthesize.py --cl $barn_13       --steps $num_steps --sim --gen --cuda --save --na Barn
 
 echo Starting job 14/27 -- Candle
-python synthesize.py --class $candle_14     --steps $num_steps --sim --gen --cuda --save --name Candle
+python synthesize.py --cl $candle_14     --steps $num_steps --sim --gen --cuda --save --na Candle
 
 echo Starting job 15/27 -- TableLamp
-python synthesize.py --class $lamp_15       --steps $num_steps --sim --gen --cuda --save --name TableLamp
+python synthesize.py --cl $lamp_15       --steps $num_steps --sim --gen --cuda --save --na TableLamp
 
 echo Starting job 16/27 -- Sandbar
-python synthesize.py --class $sandbar_16    --steps $num_steps --sim --gen --cuda --save --name Sandbar
+python synthesize.py --cl $sandbar_16    --steps $num_steps --sim --gen --cuda --save --na Sandbar
 
 echo Starting job 17/27 -- FrenchLoaf
-python synthesize.py --class $frenloaf_17   --steps $num_steps --sim --gen --cuda --save --name FrenchLoaf
+python synthesize.py --cl $frenloaf_17   --steps $num_steps --sim --gen --cuda --save --na FrenchLoaf
 
 echo Starting job 18/27 -- Lemon
-python synthesize.py --class $lemon_18      --steps $num_steps --sim --gen --cuda --save --name Lemon
+python synthesize.py --cl $lemon_18      --steps $num_steps --sim --gen --cuda --save --na Lemon
 
 echo Starting job 19/27 -- Chest
-python synthesize.py --class $chest_19      --steps $num_steps --sim --gen --cuda --save --name Chest
+python synthesize.py --cl $chest_19      --steps $num_steps --sim --gen --cuda --save --na Chest
 
 echo Starting job 20/27 -- RunningShoe
-python synthesize.py --class $runshoe_20    --steps $num_steps --sim --gen --cuda --save --name RunningShoe
+python synthesize.py --cl $runshoe_20    --steps $num_steps --sim --gen --cuda --save --na RunningShoe
 
 echo Starting job 21/27 -- WaterJug
-python synthesize.py --class $wjug_21       --steps $num_steps --sim --gen --cuda --save --name WaterJug
+python synthesize.py --cl $wjug_21       --steps $num_steps --sim --gen --cuda --save --na WaterJug
 
 echo Starting job 22/27 -- PoolTable
-python synthesize.py --class $ptable_22     --steps $num_steps --sim --gen --cuda --save --name PoolTable
+python synthesize.py --cl $ptable_22     --steps $num_steps --sim --gen --cuda --save --na PoolTable
 
 echo Starting job 23/27 -- Broom
-python synthesize.py --class $broom_23      --steps $num_steps --sim --gen --cuda --save --name Broom
+python synthesize.py --cl $broom_23      --steps $num_steps --sim --gen --cuda --save --na Broom
 
 echo Starting job 24/27 -- Cellphone
-python synthesize.py --class $cellphone_24  --steps $num_steps --sim --gen --cuda --save --name Cellphone
+python synthesize.py --cl $cellphone_24  --steps $num_steps --sim --gen --cuda --save --na Cellphone
 
 echo Starting job 25/27 -- AircraftCarrier
-python synthesize.py --class $craftcarr_25  --steps $num_steps --sim --gen --cuda --save --name AircraftCarrier
+python synthesize.py --cl $craftcarr_25  --steps $num_steps --sim --gen --cuda --save --na AircraftCarrier
 
 echo Starting job 26/27 -- EntertainmentCtr
-python synthesize.py --class $entertain_26  --steps $num_steps --sim --gen --cuda --save --name EntertainmentCtr
+python synthesize.py --cl $entertain_26  --steps $num_steps --sim --gen --cuda --save --na EntertainmentCtr
 
 echo Starting job 27/27 -- Jeans
-python synthesize.py --class $jeans_27      --steps $num_steps --sim --gen --cuda --save --name Jeans
+python synthesize.py --cl $jeans_27      --steps $num_steps --sim --gen --cuda --save --na Jeans
 
 
 # Plot it.
