@@ -202,7 +202,7 @@ def main():
         model.to(device)
 
         opt_g, opt_d = get_optimizers(model, lr=0.0002)
-        model, *_ = load_checkpoint(model, opt_g, opt_d, filename='./chk/ds19_04_2020-22-39-16_120108_64_lf1_la0.0625_li3_lr0.0002.ptm')
+        model, *_ = load_checkpoint(model, opt_g, opt_d, filename='./chk/ds20_04_2020-23-48-50_20018_64_lf1_la0.0625_li3_lr0.0002.ptm')
 
         # Begin processing.
         begin = time.time()
@@ -242,7 +242,7 @@ def main():
         model.to(device)
 
         opt_g, opt_d = get_optimizers(model, lr=0.0002)
-        model, *_ = load_checkpoint(model, opt_g, opt_d, filename='./chk/dg19_04_2020-23-33-04_80072_64_lf1_la0.0625_li3_lr0.0002.ptm')
+        model, *_ = load_checkpoint(model, opt_g, opt_d, filename='./chk/dg20_04_2020-23-19-55_20018_64_lf1_la0.0625_li3_lr0.0002.ptm')
 
         # Begin processing.
         begin = time.time()
