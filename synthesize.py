@@ -166,7 +166,8 @@ def synthesize(model, classifier, neuron=0, num_steps=300, lr=0.005, wdecay=0.00
 
     out = classifier(y)
     
-    out_img = y.cpu().detach().numpy().T.reshape(*dims)
+    out_img = y.cpu().detach().numpy()[0]
+    out_img = np.moveaxis(out_img, 0, -1)
     out_cls = torch.argmax(out).cpu().detach().numpy()
         
     return out_img, out_cls, keep_imgs
@@ -202,7 +203,7 @@ def main():
         model.to(device)
 
         opt_g, opt_d = get_optimizers(model, lr=0.0002)
-        model, *_ = load_checkpoint(model, opt_g, opt_d, filename='./chk/ds20_04_2020-23-48-50_20018_64_lf1_la0.0625_li3_lr0.0002.ptm')
+        model, *_ = load_checkpoint(model, opt_g, opt_d, filename='./chk/ds21_04_2020-13-58-29_280252_64_lf1_la0.0625_li3_lr0.0002.ptm')
 
         # Begin processing.
         begin = time.time()
@@ -242,7 +243,7 @@ def main():
         model.to(device)
 
         opt_g, opt_d = get_optimizers(model, lr=0.0002)
-        model, *_ = load_checkpoint(model, opt_g, opt_d, filename='./chk/dg20_04_2020-23-19-55_20018_64_lf1_la0.0625_li3_lr0.0002.ptm')
+        model, *_ = load_checkpoint(model, opt_g, opt_d, filename='./chk/dg21_04_2020-13-40-00_200180_64_lf1_la0.0625_li3_lr0.0002.ptm')
 
         # Begin processing.
         begin = time.time()

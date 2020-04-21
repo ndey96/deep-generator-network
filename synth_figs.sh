@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Hyper-params
-num_steps=100
+num_steps=300
 
 # Init classes to gen.
 mosque_01=668
