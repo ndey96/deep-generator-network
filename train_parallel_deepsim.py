@@ -92,10 +92,15 @@ for i in range(epochs):
                     lambda_img)
 
             # Make sure gen and discr don't get too far ahead of each other
-            loss_discr_ratio = loss_discr / loss_adv
+            loss_discr_ratio = loss_discr / (loss_adv * lambda_adv)
             if loss_discr_ratio < 1e-1:
                 train_discrimin = False
+                train_generator = True
+            elif loss_discr_ratio > 10:
+                train_discrimin = True
+                train_generator = False
             else:
+                train_discrimin = True
                 train_discrimin = True
 
             # apply backprop on the optimizers
@@ -125,7 +130,8 @@ for i in range(epochs):
                               optim_discr.param_groups[0]['lr'], n)
             writer.add_scalar('train/ds_optim_gen_lr',
                               optim_gen.param_groups[0]['lr'], n)
-
+            writer.add_scalar('train/ds_loss_discr_ratio',
+                              loss_discr_ratio, n)
             if verbose:
                 print('[TRAIN] {:3.0f} : Gen_Loss={:0.5} -- Dis_Loss={:0.5}'.
                       format(n, loss_gen, loss_discr))
