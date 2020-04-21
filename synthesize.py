@@ -34,9 +34,10 @@ def get_args():
     parser.add_argument('--sim',   action='store_true', default=False, help='Pass the provided image through the DeepSim architecture              (default: {})'.format('DISABLED'))
     parser.add_argument('--gen',   action='store_true', default=False, help='Pass the provided image through the DeepGen architecture              (default: {})'.format('DISABLED'))
     parser.add_argument('--show',  action='store_true', default=False, help='Show the initial and generated images                                 (default: {})'.format('DISABLED'))
-    parser.add_argument('--vid',   action='store_true', default=False, help='Save the morphing images as a .mp4                                    (default: {})'.format('DISABLED'))
-    parser.add_argument('--freq',  type=int, default=1,                help='Frequency at which images should be saved for .mp4                    (default: {})'.format(1))
+    parser.add_argument('--gif',   action='store_true', default=False, help='Save the morphing images as a .gif                                    (default: {})'.format('DISABLED'))
+    parser.add_argument('--freq',  type=int, default=1,                help='Frequency at which images should be saved for .gif                    (default: {})'.format(1))
     parser.add_argument('--save',  action='store_true', default=False, help='Save the output generated image                                       (default: {})'.format('DISABLED'))
+    parser.add_argument('--name',                       default=None,  help='Name for the output file concat with the network type                 (default: {})'.format('None'))
     parser.add_argument('--cuda',  action='store_true', default=False, help='Enable CUDA for processing                                            (default: {})'.format('DISABLED'))
     parser.add_argument('--verb',  action='store_true', default=False, help='Enable Verbose output                                                 (default: {})'.format('DISABLED'))
     args = parser.parse_args()
@@ -51,7 +52,7 @@ def get_args():
     return args
 
 # Load the standard deviation of codes for each node from the encoder.
-magic_numbers = np.load('temp_magic_numbers.npy')
+magic_numbers = np.load('magic_numbers.npy')
 
 def convert(img, target_type_min, target_type_max, target_type):
     imin = img.min()
@@ -64,12 +65,12 @@ def convert(img, target_type_min, target_type_max, target_type):
 
 
 
-def show_vid(img, name="", save=False, verbose=False):
+def show_gif(img, name="", save=False, verbose=False):
 
     fig = plt.figure()
     plt.tight_layout()
     plt.axis('off')
-    plt.title(name)
+    #plt.title(name)
     ima = []
     for cur in img:
         im = plt.imshow(cur, animated=True, aspect='equal')
@@ -92,7 +93,7 @@ def show_image(img, name="", save=False, verbose=False):
     plt.imshow(img, aspect='equal')
     plt.tight_layout()
     plt.axis('off')
-    plt.title(name)
+    #plt.title(name)
 
     if save:
         plt.imsave('./img/{}.png'.format(name), img, format='png')
@@ -179,6 +180,8 @@ def main():
 
     # Pull the time at the beginning of the program.
     now = time.ctime()
+    if args.name != None:
+        now = args.name
 
     # Init a cuda device if requested and available.
     if args.cuda and not torch.cuda.is_available():
@@ -212,24 +215,62 @@ def main():
             lr=0.005, 
             wdecay=0.0001,
             device=device, 
-            keep_steps=args.vid, 
+            keep_steps=args.gif, 
             keep_freq=args.freq,
             verbose=args.verb
         )
         end = time.time()
 
         # Let me know when things have finished processing.
-        if args.verb:
-            print('[INFO] Completed processing SIM in {:0.4}(s)!! Requested Class {} -- Generated Class {}'.format(end - begin, args._class, alex_class)) 
+        #if args.verb:
+        print('[INFO] Completed processing SIM in {:0.4}(s)!! Requested Class {} -- Generated Class {}\n'.format(end - begin, args._class, alex_class)) 
 
         # Save/Show the image.
         show_image(img=sim_image, name='{} - Sim_{:04d}'.format(now, args._class), save=args.save, verbose=args.verb)
 
-        if args.vid:
-            show_vid(img=sim_video, name='{} - Sim_{:04d}'.format(now, args._class), save=args.save, verbose=args.verb)
+        if args.gif:
+            show_gif(img=sim_video, name='{} - Sim_{:04d}'.format(now, args._class), save=args.save, verbose=args.verb)
 
 
-    #TODO: Copy above for DEEPGEN.
+
+    # Process with the DeepGen model.
+    if args.gen:
+
+        # Init and load the model.
+        model = DeepGen()
+        model = nn.DataParallel(model)
+        model.to(device)
+
+        opt_g, opt_d = get_optimizers(model, lr=0.0002)
+        model, *_ = load_checkpoint(model, opt_g, opt_d, filename='./chk/dg19_04_2020-23-33-04_80072_64_lf1_la0.0625_li3_lr0.0002.ptm')
+
+        # Begin processing.
+        begin = time.time()
+    
+        gen_image, alex_class, gen_video = synthesize(
+            model=model, 
+            classifier=AlexNet, 
+            neuron=args._class, 
+            num_steps=args.steps,
+            lr=0.005, 
+            wdecay=0.0001,
+            device=device, 
+            keep_steps=args.gif, 
+            keep_freq=args.freq,
+            verbose=args.verb
+        )
+        end = time.time()
+
+        # Let me know when things have finished processing.
+        #if args.verb:
+        print('[INFO] Completed processing GEN in {:0.4}(s)!! Requested Class {} -- Generated Class {}\n'.format(end - begin, args._class, alex_class)) 
+
+        # Save/Show the image.
+        show_image(img=gen_image, name='{} - Gen_{:04d}'.format(now, args._class), save=args.save, verbose=args.verb)
+
+        if args.gif:
+            show_gif(img=gen_video, name='{} - Gen_{:04d}'.format(now, args._class), save=args.save, verbose=args.verb)
+
 
 
     if args.show:
