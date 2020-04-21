@@ -94,9 +94,9 @@ for arch in architectures:
         r3.imshow(img3, aspect='equal')
 
         # Give titles.
-        r1.set_title(n1)
-        r2.set_title(n2)
-        r3.set_title(n3)
+        r1.set_title(n1, y=-0.15)
+        r2.set_title(n2, y=-0.15)
+        r3.set_title(n3, y=-0.15)
 
         # Do some formatting.
         r1.axis('off')
@@ -106,9 +106,9 @@ for arch in architectures:
     plt.tight_layout()
     plt.subplots_adjust(
         left=0.01,
-        bottom=0.01,
+        bottom=0.03,
         right=0.99, 
-        top=0.95,
+        top=0.99,
         wspace=0.05,
         hspace=0.1
     )
