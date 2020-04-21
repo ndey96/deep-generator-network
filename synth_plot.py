@@ -94,9 +94,9 @@ for arch in architectures:
         r3.imshow(img3, aspect='equal')
 
         # Give titles.
-        r1.set_title(n1, y=-0.15)
-        r2.set_title(n2, y=-0.15)
-        r3.set_title(n3, y=-0.15)
+        r1.set_title(n1, y=-0.15, fontsize=15)
+        r2.set_title(n2, y=-0.15, fontsize=15)
+        r3.set_title(n3, y=-0.15, fontsize=15)
 
         # Do some formatting.
         r1.axis('off')
