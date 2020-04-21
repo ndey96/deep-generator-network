@@ -9,9 +9,11 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # Set up the encoder.
 encoder = AlexNetEncoder()
+encoder.to(device)
+print(device)
 for param in encoder.parameters():
     param.require_grad = False
-encoder.to(device)
+
 
 # Load the data from the loader.
 imgnet_tform, train_loader, val_loader = get_data_tools(batch_size)
@@ -20,8 +22,8 @@ running = []
 for k, (inp, _) in enumerate(val_loader):
 
     # Pass this input through the network.
-    inp.to(device)
-    out = encoder(inp)
+    inpt = inp.to(device)
+    out = encoder(inpt)
 
     # Toss out uneven sized batches.
     if out.shape[0] != batch_size:
