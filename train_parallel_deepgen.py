@@ -96,10 +96,15 @@ for i in range(epochs):
                     lambda_img)
 
             # Make sure gen and discr don't get too far ahead of each other
-            loss_discr_ratio = loss_discr / loss_adv
+            loss_discr_ratio = loss_discr / (loss_adv * lambda_adv)
             if loss_discr_ratio < 1e-1:
                 train_discrimin = False
+                train_generator = True
+            elif loss_discr_ratio > 10:
+                train_discrimin = True
+                train_generator = False
             else:
+                train_discrimin = True
                 train_discrimin = True
 
             # apply backprop on the optimizers
@@ -114,27 +119,7 @@ for i in range(epochs):
                 optim_discr.step()
 
             # book-keeping and reporting
-            n = training_batches * batch_size
-            lf = lambda_feat * loss_feat.detach()
-            la = lambda_adv * loss_adv.detach()
-            li = lambda_img * loss_img.detach()
-
-            writer.add_scalar('train/dg_loss_gen', loss_gen.detach(), n)
-            writer.add_scalar('train/dg_loss_discr', loss_discr.detach(), n)
-            writer.add_scalar('train/dg_loss_feat', lf, n)
-            writer.add_scalar('train/dg_loss_adv', la, n)
-            writer.add_scalar('train/dg_loss_img', li, n)
-            writer.add_scalar('train/dg_discr_train', int(train_discrimin), n)
-            writer.add_scalar('train/dg_optim_discr_lr',
-                              optim_discr.param_groups[0]['lr'], n)
-            writer.add_scalar('train/dg_optim_gen_lr',
-                              optim_gen.param_groups[0]['lr'], n)
-
-            if verbose:
-                print('[TRAIN] {:3.0f} : Gen_Loss={:0.5} -- Dis_Loss={:0.5}'.
-                      format(n, loss_gen.detach(), loss_discr.detach()))
-
-            # In the hopes of isolating/mitigating what we think are possible
+            n = training_batches * batch            # In the hopes of isolating/mitigating what we think are possible
             # memory leaks.
             del y
             del x
@@ -148,7 +133,29 @@ for i in range(epochs):
             del loss_img
             del loss_adv
             del loss_discr
-            del loss_gen
+            del loss_gen_size
+            lf = lambda_feat * loss_feat.detach()
+            la = lambda_adv * loss_adv.detach()
+            li = lambda_img * loss_img.detach()
+
+            writer.add_scalar('train/dg_loss_gen', loss_gen.detach(), n)
+            writer.add_scalar('train/dg_loss_discr', loss_discr.detach(), n)
+            writer.add_scalar('train/dg_loss_feat', lf, n)
+            writer.add_scalar('train/dg_loss_adv', la, n)
+            writer.add_scalar('train/dg_loss_img', li, n)
+            writer.add_scalar('train/dg_discr_train', int(train_discrimin), n)
+            writer.add_scalar('train/dg_loss_discr_ratio',
+                              loss_discr_ratio, n)
+            writer.add_scalar('train/dg_optim_discr_lr',
+                              optim_discr.param_groups[0]['lr'], n)
+            writer.add_scalar('train/dg_optim_gen_lr',
+                              optim_gen.param_groups[0]['lr'], n)
+
+            if verbose:
+                print('[TRAIN] {:3.0f} : Gen_Loss={:0.5} -- Dis_Loss={:0.5}'.
+                      format(n, loss_gen.detach(), loss_discr.detach()))
+
+
 
     # Save a checkpoint
     save_checkpoint("dg", path, DS, optim_gen, optim_discr, training_batches,
