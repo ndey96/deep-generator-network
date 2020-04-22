@@ -166,14 +166,8 @@ def synthesize(model, classifier, neuron=0, num_steps=300, lr=0.005, wdecay=0.00
 
     out = classifier(y)
     
-<<<<<<< HEAD
     out_img = y.cpu().detach().numpy()[0]
     out_img = np.moveaxis(out_img, 0, -1)
-=======
-    out_img = y.cpu().detach().numpy().T
-    out_img = np.moveaxis(out_img, 0, -1)
-    
->>>>>>> 6e9bb0d0685328e3d7641df025ba9d55b05e272f
     out_cls = torch.argmax(out).cpu().detach().numpy()
         
     return out_img, out_cls, keep_imgs
@@ -249,11 +243,7 @@ def main():
         model.to(device)
 
         opt_g, opt_d = get_optimizers(model, lr=0.0002)
-<<<<<<< HEAD
         model, *_ = load_checkpoint(model, opt_g, opt_d, filename='./chk/dg21_04_2020-13-40-00_200180_64_lf1_la0.0625_li3_lr0.0002.ptm')
-=======
-        model, *_ = load_checkpoint(model, opt_g, opt_d, filename='./chk/dg21_04_2020-09-31-15_160144_64_lf1_la0.0625_li3_lr0.0002.ptm')
->>>>>>> 6e9bb0d0685328e3d7641df025ba9d55b05e272f
 
         # Begin processing.
         begin = time.time()
