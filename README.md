@@ -1,11 +1,18 @@
 # deep-generator-network
 
+Unofficial implementation of [Synthesizing the preferred inputs for neurons in neural networks via deep generator networks by Nguyen et al.](https://papers.nips.cc/paper/6519-synthesizing-the-preferred-inputs-for-neurons-in-neural-networks-via-deep-generator-networks.pdf).
+
+Original:
+
+
+Ours:
+
+
 Pretrained models are available for download at:
 https://www.dropbox.com/sh/gdkr6n1d83jx2kg/AACet2EbEWFmlpysHNOSYemHa?dl=
 
 To train, and generate new training weights, or synthesize using either the provided pre-trained checkpoints, or your own
-ilsvrc2012 is required local to your machine.  Any hardcoded paths in train_parallel_deep*.py or synthesize.py, to ilsvrc2012 
-training and validation image directories should be set. 
+ilsvrc2012 is required local to your machine.  Any hardcoded paths in train_parallel_deep*.py or synthesize.py, to ilsvrc2012 training and validation image directories should be set. 
 
 Various parameters can be set - you'll have to experiment and read the related papers to get a feel for that. 
 
@@ -18,4 +25,4 @@ python train_parallel_deepgen.py
 python train_parallel_deepsim.py
 
 Synthesis:
-bash synth_figs.py
+bash synth_figs.sh
