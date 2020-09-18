@@ -3,9 +3,10 @@
 Unofficial implementation of [Synthesizing the preferred inputs for neurons in neural networks via deep generator networks by Nguyen et al.](https://papers.nips.cc/paper/6519-synthesizing-the-preferred-inputs-for-neurons-in-neural-networks-via-deep-generator-networks.pdf).
 
 Original:
-
+<img width="1035" alt="Screen Shot 2020-09-18 at 1 42 16 AM" src="https://user-images.githubusercontent.com/10405248/93560565-7262d100-f950-11ea-8432-c056c0bed048.png">
 
 Ours:
+<img width="1024" alt="Screen Shot 2020-09-18 at 1 42 08 AM" src="https://user-images.githubusercontent.com/10405248/93560562-6f67e080-f950-11ea-91e0-22593734dc81.png">
 
 
 Pretrained models are available for download at:
